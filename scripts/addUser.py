@@ -8,6 +8,7 @@ load_dotenv()
 username = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWD')
 database = os.getenv('DB_NAME')
+judgeurl = os.getenv('JUDGE_URL')
 table_name = 'user'
 
 if len(sys.argv) != 3:
@@ -42,5 +43,6 @@ db.close()
 
 try:
   os.mkdir(f'../files/{student_id}')
+  os.system('ssh root@' + judgeurl.replace('http://','') + ' bash /etc/nasajudgeserver/addvpnuser.sh ' + student_id)
 except FileExistsError:
   print('Directory already exists')
