@@ -40,6 +40,25 @@ function getMaxLabScore(studentId, labId) {
   })
 }
 
+function getSubmission(studentId, labId) {
+  return new Promise((resolve, reject) => {
+    con.query('SELECT studentId, labId, result, score, createAt FROM ?? WHERE labId=? AND studentId=? ORDER BY createAt DESC'
+      , [tableName, studentId, labId], (err, rows) => {
+      if (err) {
+        reject(err);
+      }
+      rows.forEach((row) => {
+        try {
+          row.contents = JSON.parse(row.contents);
+        } catch(err) {
+          reject(err);
+        }
+      });
+      resolve(rows);
+    })
+  })
+}
+
 function addScore(studentId, labId, score, result) {
   return new Promise((resolve, reject) => {
     try {
@@ -61,4 +80,5 @@ module.exports = {
   isExists,
   getMaxLabScore,
   addScore,
+  getSubmission
 };

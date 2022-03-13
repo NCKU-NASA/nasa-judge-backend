@@ -37,4 +37,17 @@ router.get('/:labId/score', auth.checkSignIn, async function(req, res, next) {
   }
 });
 
+router.get('/:labId/submission', auth.checkSignIn, async function(req, res, next) {
+  try {
+    const lab = await Lab.getLab(req.params.labId);
+    if (!lab) {
+      throw createError(404);
+    }
+    const studentId = req.session.user.studentId;
+    const submissions = await Score.getSubmission(studentId, lab);
+    res.send({ submissions });
+  } catch(err) {
+    next(err);
+  }
+});
 module.exports = router;
