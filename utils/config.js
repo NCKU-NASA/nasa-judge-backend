@@ -4,6 +4,7 @@ const path = require('path');
 const User = require('../models/user');
 
 const requiredVars = [
+  'DB_HOST',
   'DB_NAME',
   'DB_USER',
   'DB_PASSWD',
