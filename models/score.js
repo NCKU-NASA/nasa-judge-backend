@@ -13,20 +13,24 @@ function isExists() {
   });
 }
 
-isExists().then((result) => {
-  if (!result) {
-    con.query('CREATE TABLE ?? (\
-      id bigint AUTO_INCREMENT PRIMARY KEY,\
-      studentId varchar(255),\
-      labId varchar(255),\
-      score int,\
-      result text,\
-      FOREIGN KEY (studentId) REFERENCES user(studentId),\
-      FOREIGN KEY (labId) REFERENCES lab(id),\
-      createAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP\
-    )', [tableName]);
-  }
-});
+isExists()
+    .then((result) => {
+      if (!result) {
+        con.query('CREATE TABLE ?? (\
+        id bigint AUTO_INCREMENT PRIMARY KEY,\
+        studentId varchar(255),\
+        labId varchar(255),\
+        score int,\
+        result text,\
+        FOREIGN KEY (studentId) REFERENCES user(studentId),\
+        FOREIGN KEY (labId) REFERENCES lab(id),\
+        createAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP\
+        )', [tableName]);
+      }
+     })
+    .catch((rej) => {
+        console.error(`Error: ${rej}`)
+    })
 
 function getMaxLabScore(studentId, labId) {
   return new Promise((resolve, reject) => {
@@ -36,6 +40,25 @@ function getMaxLabScore(studentId, labId) {
         reject(err);
       }
       resolve((row.length !== 1) ? 0 : row[0].maxScore);
+    })
+  })
+}
+
+function getSubmission(studentId, labId) {
+  return new Promise((resolve, reject) => {
+    con.query('SELECT studentId, labId, result, score, createAt FROM ?? WHERE labId=? AND studentId=? ORDER BY createAt DESC'
+      , [tableName, studentId, labId], (err, rows) => {
+      if (err) {
+        reject(err);
+      }
+      rows.forEach((row) => {
+        try {
+          row.contents = JSON.parse(row.contents);
+        } catch(err) {
+          reject(err);
+        }
+      });
+      resolve(rows);
     })
   })
 }
@@ -61,4 +84,6 @@ module.exports = {
   isExists,
   getMaxLabScore,
   addScore,
+  getSubmission
 };
+

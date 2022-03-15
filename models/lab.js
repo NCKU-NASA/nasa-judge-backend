@@ -13,14 +13,18 @@ function isExists() {
   });
 }
 
-isExists().then((result) => {
-  if (!result) {
-    con.query('CREATE TABLE ?? (\
-      id varchar(255) PRIMARY KEY,\
-      contents JSON\
-    )', [tableName]);
-  }
-});
+isExists()
+    .then((result) => {
+       if (!result) {
+         con.query('CREATE TABLE ?? (\
+         id varchar(255) PRIMARY KEY,\
+         contents JSON\
+         )', [tableName]);
+       }
+     })
+     .catch((rej) => {
+         console.error(`Error: ${rej}`)
+     })
 
 function getLabs() {
   return new Promise((resolve, reject) => {

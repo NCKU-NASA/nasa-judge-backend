@@ -13,14 +13,19 @@ function isExists() {
   });
 }
 
-isExists().then((result) => {
-  if (!result) {
-    con.query('CREATE TABLE ?? (\
-      studentId varchar(255) PRIMARY KEY,\
-      password varchar(255)\
-    )', [tableName]);
-  }
-});
+isExists()
+    .then((result) => {
+      if (!result) {
+        con.query('CREATE TABLE ?? (\
+        studentId varchar(255) PRIMARY KEY,\
+        password varchar(255)\
+        )', [tableName]);
+        console.error(`created user`)
+      }
+     })
+     .catch((rej) => {
+         console.error(`Error: ${rej}`);
+     })
 
 function getUser(studentId) {
   if (!studentId) {
