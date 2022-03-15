@@ -13,20 +13,24 @@ function isExists() {
   });
 }
 
-isExists().then((result) => {
-  if (!result) {
-    con.query('CREATE TABLE ?? (\
-      id bigint AUTO_INCREMENT PRIMARY KEY,\
-      studentId varchar(255),\
-      labId varchar(255),\
-      score int,\
-      result text,\
-      FOREIGN KEY (studentId) REFERENCES user(studentId),\
-      FOREIGN KEY (labId) REFERENCES lab(id),\
-      createAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP\
-    )', [tableName]);
-  }
-});
+isExists()
+    .then((result) => {
+      if (!result) {
+        con.query('CREATE TABLE ?? (\
+        id bigint AUTO_INCREMENT PRIMARY KEY,\
+        studentId varchar(255),\
+        labId varchar(255),\
+        score int,\
+        result text,\
+        FOREIGN KEY (studentId) REFERENCES user(studentId),\
+        FOREIGN KEY (labId) REFERENCES lab(id),\
+        createAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP\
+        )', [tableName]);
+      }
+     })
+    .catch((rej) => {
+        console.error(`Error: ${rej}`)
+    })
 
 function getMaxLabScore(studentId, labId) {
   return new Promise((resolve, reject) => {
@@ -82,3 +86,4 @@ module.exports = {
   addScore,
   getSubmission
 };
+

@@ -1,4 +1,7 @@
-FROM node:16-alpine3.14
+FROM node:14
 COPY . .
-RUN ['npm', 'install']
-ENTRYPOINT ['npm', 'start']
+EXPOSE 3000
+
+RUN ["npm", "install"]
+
+ENTRYPOINT ["./wait-for-it.sh", "mysql:3306", "-s", "-t", "100", "--", "npm", "start"]

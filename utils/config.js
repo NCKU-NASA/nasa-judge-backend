@@ -18,11 +18,17 @@ function createFilesDir() {
 }
 
 async function createUserDir() {
-  User.getUsers().then((users) => {
-    users.map((user) => {
-      fs.mkdirSync(path.join(__dirname, `../files/${user.studentId}`), { recursive: true });
-    });
-  });
+  setTimeout(() => {
+      User.getUsers()
+    .then((users) => {
+      users.map((user) => {
+        fs.mkdirSync(path.join(__dirname, `../files/${user.studentId}`), { recursive: true });
+      });
+    })
+    .catch((rej) => {
+      console.error(`ERROR: Fail to get all userID ${rej}`)
+    })
+  }, 1500);
 }
 
 function config() {
@@ -42,3 +48,4 @@ function config() {
 module.exports = {
   config
 };
+
