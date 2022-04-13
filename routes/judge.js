@@ -31,12 +31,12 @@ router.post('/', auth.checkSignIn, upload.array('uploads', maxUploadCount), asyn
       data: fileContents.concat(inputContents),
     };
     const result = await axios.post(judgeUrl, body);
-    const score = calcScore(result.data);
+    const score = calcScore(result.data.results);
 
     // save score
-    await Score.addScore(studentId, lab.id, score, result.data);
+    await Score.addScore(studentId, lab.id, score, result.data.results);
 
-    res.send({ score, results: result.data });
+    res.send({ score, results: result.data.results, stdout: result.data.stdout, stderr: result.data.stderr });
   } catch(err) {
     next(err);
   }
