@@ -30,7 +30,10 @@ async function addMeta(req, res, next) {
       username: req.session.user.studentId,
     };
     const result = await axios.post(vncproxyUrl + "/session", body, header);
-    res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""));
+    if(result.headers['set-cookie'] != undefined)
+    {
+      res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""));
+    }
     req.isSignIn = true;
   } else {
     res.clearCookie('session')
