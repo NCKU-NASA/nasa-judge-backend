@@ -1,4 +1,6 @@
 const createError = require('http-errors');
+const axios = require('axios');
+const vncproxyUrl = process.env.VNCPROXY_URL;
 
 function checkSignIn(req, res, next) {
   if (req.isSignIn === true) {
