@@ -3,9 +3,11 @@ const createError = require('http-errors');
 const User = require('../models/user');
 const path = require('path');
 const auth = require('../middlewares/auth');
+const axios = require('axios');
 const fs = require('fs');
 const router = express.Router();
 const configFilename = 'wireguard.zip';
+const vncproxyUrl = process.env.VNCPROXY_URL;
 
 function createUserDir(studentId) {
   if (!studentId) {
@@ -31,6 +33,13 @@ router.post('/login', async function(req, res, next) {
     req.session.user = {
       studentId: user.studentId,
     };
+    
+    const body = {
+      username: user.studentId,
+    };
+    const result = await axios.post(vncproxyUrl + "/session", body);
+    res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""))
+    
     res.send('Login success');
     createUserDir(user.studentId);
   } catch(err) {
