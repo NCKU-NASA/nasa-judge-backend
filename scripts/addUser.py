@@ -44,7 +44,7 @@ db.close()
 try:
   os.mkdir(f'../files/{student_id}')
   os.system(f'chown -R www-data:www-data ../files/{student_id}')
-#  os.system('ssh root@' + judgeurl.replace('http://','') + ' bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
-  os.system('bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
+  os.system('ssh root@' + judgeurl.replace('http://','') + ' bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
+#  os.system('bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
 except FileExistsError:
   print('Directory already exists')
