@@ -15,8 +15,8 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
     const result = await axios.get(judgeUrl + "/alive", {
         timeout: 5000
     });
+    res.send(result.data);
 
-    res.send(result);
   } catch(err) {
     next(err);
   }
