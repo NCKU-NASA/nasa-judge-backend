@@ -1,0 +1,16 @@
+#!/usr/bin/env ansible-playbook
+- hosts: localhost
+  vars_files:
+    - defaults/main.yml
+    - vars/main.yml
+
+  roles:
+  - geerlingguy.mysql
+  - jimmy01240397.nodejs 
+
+  tasks:
+    - name: include main task
+      include: tasks/main.yml
+  
+  handlers:
+    - include: handlers/main.yml

@@ -1,0 +1,7 @@
+- name: Start judge
+  systemd: 
+    name: nasajudgebackend
+    enabled: true
+    daemon_reload: true
+    state: started
+  become: true

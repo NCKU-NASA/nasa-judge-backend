@@ -1,0 +1,6 @@
+dbname: nasa
+dbuser: nasa
+dbpassword: nasa
+secret: nasa
+judgeurl: localhost
+vncproxyurl: localhost

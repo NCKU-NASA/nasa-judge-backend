@@ -9,7 +9,7 @@ const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
 const labsRouter = require('./routes/labs');
 const judgeRouter = require('./routes/judge');
-const checkapialiveRouter = require('./routes/checkapialive');
+const scoreRouter = require('./routes/score');
 
 const app = express();
 
@@ -18,13 +18,13 @@ app.use(session);
 app.use(auth.addMeta);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/user', userRouter);
 app.use('/labs', labsRouter);
 app.use('/judge', judgeRouter);
-app.use('/checkapialive', checkapialiveRouter);
+app.use('/score', scoreRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

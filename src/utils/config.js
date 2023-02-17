@@ -19,7 +19,7 @@ function createFilesDir() {
 async function createUserDir() {
   User.getUsers().then((users) => {
     users.map((user) => {
-      fs.mkdirSync(path.join(__dirname, `../files/${user.studentId}`), { recursive: true });
+      fs.mkdirSync(path.join(__dirname, `../files/${user.username}`), { recursive: true });
     });
   });
 }

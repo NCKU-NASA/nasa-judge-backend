@@ -27,7 +27,7 @@ async function addMeta(req, res, next) {
       };
     }
     const body = {
-      username: req.session.user.studentId,
+      username: req.session.user.username,
     };
     try
     {

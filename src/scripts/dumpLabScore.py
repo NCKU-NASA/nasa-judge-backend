@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # TODO: fill these values
-username = os.getenv('DB_USER')
-password = os.getenv('DB_PASSWD')
+dbusername = os.getenv('DB_USER')
+dbpassword = os.getenv('DB_PASSWD')
 database = os.getenv('DB_NAME')
 table_name = 'score'
 
@@ -22,8 +22,8 @@ if len(sys.argv) == 3:
 try:
   db = pymysql.connect(
     host='localhost',
-    user=username,
-    password=password,
+    user=dbusername,
+    password=dbpassword,
     database=database,
   )
 except Exception as err:
@@ -32,9 +32,9 @@ except Exception as err:
 
 cur = db.cursor()
 if timestamp:
-  cur.execute(f'SELECT studentId, MAX(score) FROM `{table_name}` WHERE labId=%s AND createAt<%s GROUP BY studentId, labId', (lab_id, timestamp))
+  cur.execute(f'SELECT username, MAX(score) FROM `{table_name}` WHERE labId=%s AND createAt<%s GROUP BY username, labId', (lab_id, timestamp))
 else:
-  cur.execute(f'SELECT studentId, MAX(score) FROM `{table_name}` WHERE labId=%s GROUP BY studentId, labId', (lab_id))
+  cur.execute(f'SELECT username, MAX(score) FROM `{table_name}` WHERE labId=%s GROUP BY username, labId', (lab_id))
 rows = cur.fetchall()
 
 for row in rows:
