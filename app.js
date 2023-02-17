@@ -9,6 +9,7 @@ const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
 const labsRouter = require('./routes/labs');
 const judgeRouter = require('./routes/judge');
+const checkapialiveRouter = require('./routes/checkapialive');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/', indexRouter);
 app.use('/user', userRouter);
 app.use('/labs', labsRouter);
 app.use('/judge', judgeRouter);
+app.use('/checkapialive', checkapialiveRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

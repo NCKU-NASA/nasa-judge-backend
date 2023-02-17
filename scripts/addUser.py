@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import pymysql, sys, json, os
+import pymysql, sys, json, os, hashlib, base64
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,6 +9,7 @@ username = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWD')
 database = os.getenv('DB_NAME')
 judgeurl = os.getenv('JUDGE_URL')
+judgeatlocal = bool(os.getenv('JUDGE_AT_LOCAL'))
 table_name = 'user'
 
 if len(sys.argv) != 3:
@@ -16,7 +17,7 @@ if len(sys.argv) != 3:
   sys.exit(1)
 
 student_id = sys.argv[1]
-student_pass = sys.argv[2]
+student_pass = base64.b64encode(hashlib.sha256(sys.argv[2].encode('utf-8')).digest()).decode('utf-8')
 
 try:
   db = pymysql.connect(
@@ -44,6 +45,10 @@ db.close()
 try:
   os.mkdir(f'../files/{student_id}')
   os.system(f'chown -R www-data:www-data ../files/{student_id}')
-  os.system('ssh root@' + judgeurl.replace('http://','') + ' bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
+
+  if judgeatlocal:
+    os.system('bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
+  else:
+    os.system('ssh root@' + judgeurl.replace('http://','') + ' bash /etc/nasajudgeapi/addvpnuser.sh ' + student_id)
 except FileExistsError:
   print('Directory already exists')
