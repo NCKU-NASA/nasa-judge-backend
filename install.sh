@@ -55,6 +55,9 @@ done
 
 read -p "Enter database user $dbuser Password: " -s dbpassword
 
+ansible-galaxy collection install -r $dirpath/requirements.yml -f
+ansible-galaxy role install -r $dirpath/requirements.yml -f
+
 ansible-playbook $dirpath/setup.yml -e "{\"port\":$port,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
 
 echo ""
