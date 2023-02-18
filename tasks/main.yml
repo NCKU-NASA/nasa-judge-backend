@@ -1,7 +1,7 @@
 - name: Stop judge
   systemd: 
     name: nasajudgebackend
-    state: stoped
+    state: stopped
   become: true
   ignore_errors: true
 
@@ -32,7 +32,7 @@
 
 - name: Copy config files
   template:
-    src: "templates/{{ item.item }}"
+    src: "templates/config/{{ item.item }}"
     dest: "{{ nasajudgebackenddir }}/{{ item.item }}"
     owner: nasa
     group: nasa
