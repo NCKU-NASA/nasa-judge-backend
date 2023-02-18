@@ -3,5 +3,5 @@ dbname: nasa
 dbuser: nasa
 dbpassword: nasa
 secret: nasa
-judgeurl: localhost:8000
-vncproxyurl: localhost:4000
+judgeurl: http://localhost:8000
+vncproxyurl: http://localhost:4000

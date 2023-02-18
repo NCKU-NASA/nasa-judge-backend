@@ -55,19 +55,26 @@ router.post('/login', async function(req, res, next) {
 });
 
 router.post('/add', async function(req, res, next) {
-  const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
-  User.addScore(req.body.username, passwordhash, req.body.studentId)
+  try {
+    const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
+    res.send(await User.addUser(req.body.username, passwordhash, req.body.studentId))
+  } catch(err) {
+    next(err);
+  }
 });
 
 router.get('/config', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
-    const userdata = User.getUser(username);
+    const userdata = await User.getUser(username);
     const result = await judgeapi.post('download/userconfig', userdata, {
-        responseType: 'blob',
+        responseType: 'arraybuffer',
     });
     if(!result.alive) return;
-    res.send(new Blob([res.data]));
+    res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
+                       'Content-Type':result.headers['content-type']});
+    res.write(Buffer.from(result.data,'binary'),'binary');
+    res.end(null, 'binary');
   } catch(err) {
       next(err);
   }

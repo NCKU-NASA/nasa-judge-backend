@@ -32,6 +32,20 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
 });
 
 //router.use('/public', auth.checkSignIn, express.static(path.join(__dirname, '../files/public')));
+router.get('/:labId/download/description', auth.checkSignIn, async function(req, res, next) {
+  try { 
+    const result = await judgeapi.get(`/download/${req.params.labId}/description`, {
+        responseType: 'arraybuffer',
+    });
+    if(!result.alive) return;
+    res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
+                       'Content-Type':result.headers['content-type']});
+    res.write(Buffer.from(result.data,'binary'),'binary');
+    res.end(null, 'binary');
+  } catch(err) {
+      next(err);
+  }
+});
 
 router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, res, next) {
   try { 
@@ -45,10 +59,13 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
     else path = `download/${req.params.labId}/${req.params.filename}`
 
     const result = await judgeapi.get(path, {
-        responseType: 'blob',
+        responseType: 'arraybuffer',
     });
     if(!result.alive) return;
-    res.send(new Blob([res.data]));
+    res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
+                       'Content-Type':result.headers['content-type']});
+    res.write(Buffer.from(result.data,'binary'),'binary');
+    res.end(null, 'binary');
   } catch(err) {
       next(err);
   }

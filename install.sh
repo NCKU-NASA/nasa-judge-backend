@@ -17,8 +17,8 @@ Options:
 
 dirpath=$(dirname "$0")
 
-judgeurl="localhost:8000"
-vncproxyurl="localhost:4000"
+judgeurl="http://localhost:8000"
+vncproxyurl="http://localhost:4000"
 port="3000"
 dbname="nasa"
 dbuser="nasa"

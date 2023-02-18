@@ -36,12 +36,13 @@ function getUser(username) {
       if (err) {
         reject(err);
       }
+      if(result.length === 0) resolve(undefined);
       try {
         result[0].groups = JSON.parse(result[0].groups);
       } catch(err) {
         reject(err);
       }
-      resolve(result.length === 0 ? undefined : result[0]);
+      resolve(result[0]);
     });
   });
 }
@@ -56,12 +57,13 @@ function getUserbyipindex(ipindex) {
       if (err) {
         reject(err);
       }
+      if(result.length === 0) resolve(undefined);
       try {
         result[0].groups = JSON.parse(result[0].groups);
       } catch(err) {
         reject(err);
       }
-      resolve(result.length === 0 ? undefined : result[0]);
+      resolve(result[0]);
     });
   });
 }
@@ -85,31 +87,29 @@ function getUsers() {
   });
 }
 
-function addUser(username, password, studentId) {
-  return new Promise((resolve, reject) => {
-    try {
-      var groups = JSON.stringify(["guest"]);
-    } catch(err) {
-      reject(err);
-    }
-    judegapi.get("alive").then((alive) => {
-      if(!result.alive) reject("not alive");
+async function addUser(username, password, studentId) {
+  var groups = JSON.stringify(["guest"]);
+  const query = () => {
+    return new Promise((resolve, reject) => {
       con.query('INSERT INTO ?? (username, password, studentId, groups) VALUES (?, ?, ?, ?)'
         , [tableName, username, password, studentId, groups], (err) => {
         if (err) {
           reject(err);
-        }
-        const body = getUser(username);
-        const result = judgeapi.post("builduser", body).then((result) => {
+        } else {
           resolve();
-        }, (error) => {
-          reject(error);
-        });
+        }
       });
-    }, (error) => {
-      reject(error);
     });
-  });
+  };
+  const alive = await judgeapi.get("alive");
+  if(!alive.alive) throw "not alive";
+  let body = await getUser(username);
+  if(!body) {
+    await query();
+    body = await getUser(username);
+  }
+  const result = await judgeapi.post("builduser", body);
+  return result.data;
 }
 
 module.exports = {
