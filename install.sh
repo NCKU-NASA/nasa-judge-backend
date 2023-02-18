@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 printhelp()
 {
 	echo "Usage: $0 [options]
