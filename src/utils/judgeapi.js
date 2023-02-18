@@ -3,35 +3,56 @@ const judgeUrl = process.env.JUDGE_URL;
 
 module.exports = {}
 
-async function checkalive(timeout) {
+function checkalive(timeout) {
+  return new Promise((resolve, reject) => {
     try {
-      const resultalive = await axios.get(judgeUrl + "/alive", { timeout });
-      return resultalive.data;
+      axios.get(judgeUrl + "/alive", { timeout }).then((resultalive) => {
+        resolve(resultalive.data);
+      }, (error) => {
+        resolve(false);
+      });
     } catch(err) {
-      return false;
+      resolve(false);
     }
+  });
 }
 
 ['delete', 'get', 'head', 'options'].forEach(method => {
   /*eslint func-names:0*/
-  module.exports[method] = async function(url, config) {
-    const alive = await checkalive((config || {}).timeout || 5)
-    if(!alive) return {alive};
-    delete (config || {}).timeout;
-    const result = await axios[method](url.replace(/^(.*:\/\/)?[^\/]*/, judgeUrl + "/"), config);
-    result.alive = alive;
-    return result;
+  module.exports[method] = function(url, config) {
+    return new Promise((resolve, reject) => {
+      checkalive((config || {}).timeout || 5).then((alive) => {
+        if(!alive) return {alive};
+        delete (config || {}).timeout;
+        axios[method](url.replace(/^(.*:\/\/)?[^\/]*/, judgeUrl + "/"), config).then((result) => {
+          result.alive = alive;
+          resolve(result);
+        }, (error) => {
+            reject(error);
+        });
+      }, (error) => {
+        reject(error);
+      });
+    });
   };
 });
 
 ['post', 'put', 'patch'].forEach(method => {
   /*eslint func-names:0*/
-  module.exports[method] = async function(url, data, config) {
-    const alive = await checkalive((config || {}).timeout || 5)
-    if(!alive) return {alive};
-    delete (config || {}).timeout;
-    const result = await axios[method](url.replace(/^(.*:\/\/)?[^\/]*/, judgeUrl + "/"), data, config);
-    result.alive = alive;
-    return result;
+  module.exports[method] = function(url, data, config) {
+    return new Promise((resolve, reject) => {
+      checkalive((config || {}).timeout || 5).then((alive) => {
+        if(!alive) return {alive};
+        delete (config || {}).timeout;
+        axios[method](url.replace(/^(.*:\/\/)?[^\/]*/, judgeUrl + "/"), data, config).then((result) => {
+          result.alive = alive;
+          resolve(result);
+        }, (error) => {
+            reject(error);
+        });
+      }, (error) => {
+        reject(error);
+      });
+    });
   };
 });

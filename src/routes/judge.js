@@ -40,11 +40,12 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       labId: lab.id,
       username,
       ipindex,
-      data: placeDatas({"value":(input) => {
-        return (input || "");
+      data: await placeDatas({"value":(input) => {
+        return new Promise((resolve, reject) => {
+          resolve(input || "");
+        });
       }, "file":(file) => {
-        if (!file) {
-          throw createError(400, 'The number of files did not match');
+        if (!file) throw createError(400, 'The number of files did not match');
         return new Promise((resolve, reject) => {
           fs.readFile(path.join(os.tmpdir(), file.filename), (err, data) => {
             if (err) {
@@ -53,7 +54,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
             resolve(Buffer.from(data).toString('base64'));
           });
         });
-      }}, solve, lab),
+      }}, lab),
     };
     const result = await judgeapi.post("judge", body);
     if(!result.alive) res.send({ alive: result.alive });
@@ -81,8 +82,8 @@ router.post('/canjudge', auth.checkSignIn, async function(req, res, next) {
   const username = req.session.user.username;
   const result = await judgeapi.post("canjudge", {username});
   if(!result.alive) res.send(result.alive);
-  res.send(result.data)
-}
+  res.send(result.data);
+});
 
 function calcScore(judgeResult) {
   let score = 0;
@@ -96,14 +97,14 @@ function calcScore(judgeResult) {
   return score;
 }
 
-function placeDatas(data, solve, lab) {
-  return lab.contents.map((content) => {
+async function placeDatas(solve, lab) {
+  return Promise.all(lab.contents.map(async (content) => {
     return {
       type: content.type,
       name: content.name,
       data: await solve[content.type](data[content.type][content.name]),
     };
-  });
+  }));
 }
 
 function removeTempFiles(files) {

@@ -27,10 +27,10 @@ isExists().then((result) => {
 });
 
 function getUser(username) {
-  if (!username) {
-    return false;
-  }
   return new Promise((resolve, reject) => {
+    if (!username) {
+      reject('username empty');
+    }
     con.query('SELECT * FROM ?? WHERE username=? LIMIT 1'
       , [tableName, username], (err, result) => {
       if (err) {
@@ -47,10 +47,10 @@ function getUser(username) {
 }
 
 function getUserbyipindex(ipindex) {
-  if (!ipindex) {
-    return false;
-  }
   return new Promise((resolve, reject) => {
+    if (!ipindex) {
+      reject('ipindex empty');
+    }
     con.query('SELECT * FROM ?? WHERE ipindex=? LIMIT 1'
       , [tableName, ipindex], (err, result) => {
       if (err) {
@@ -73,7 +73,7 @@ function getUsers() {
       if (err) {
         reject(err);
       }
-      rows.forEach((row) => {
+      rows?.forEach((row) => {
         try {
           row.groups = JSON.parse(row.groups);
         } catch(err) {
@@ -85,25 +85,30 @@ function getUsers() {
   });
 }
 
-function addScore(username, password, studentId) {
+function addUser(username, password, studentId) {
   return new Promise((resolve, reject) => {
     try {
       var groups = JSON.stringify(["guest"]);
     } catch(err) {
       reject(err);
     }
-    const alive = await judegapi.get("alive")
-    if(!result.alive) reject("not alive");
-    con.query('INSERT INTO ?? (username, password, studentId, groups) VALUES (?, ?, ?, ?)'
-      , [tableName, username, password, studentId, groups], (err) => {
-      if (err) {
-        reject(err);
-      }
-      const body = getUser(username);
-      const result = await judgeapi.post("builduser", body);
-      resolve();
+    judegapi.get("alive").then((alive) => {
+      if(!result.alive) reject("not alive");
+      con.query('INSERT INTO ?? (username, password, studentId, groups) VALUES (?, ?, ?, ?)'
+        , [tableName, username, password, studentId, groups], (err) => {
+        if (err) {
+          reject(err);
+        }
+        const body = getUser(username);
+        const result = judgeapi.post("builduser", body).then((result) => {
+          resolve();
+        }, (error) => {
+          reject(error);
+        });
+      });
+    }, (error) => {
+      reject(error);
     });
-
   });
 }
 

@@ -12,18 +12,6 @@ const requiredVars = [
 ];
 const lackVars = [];
 
-function createFilesDir() {
-  fs.mkdirSync(path.join(__dirname, '../files/public'), { recursive: true });
-}
-
-async function createUserDir() {
-  User.getUsers().then((users) => {
-    users.map((user) => {
-      fs.mkdirSync(path.join(__dirname, `../files/${user.username}`), { recursive: true });
-    });
-  });
-}
-
 function config() {
   requiredVars.forEach((envVar) => {
     if (!process.env[envVar]) {
@@ -34,8 +22,6 @@ function config() {
     console.error(`ERROR: Environment variables ${lackVars.join(', ')} not set.`);
     process.exit(1);
   }
-  createFilesDir();
-  createUserDir();
 }
 
 module.exports = {
