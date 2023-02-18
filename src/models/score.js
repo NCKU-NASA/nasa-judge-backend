@@ -23,7 +23,6 @@ isExists().then((result) => {
       score int,\
       result text,\
       FOREIGN KEY (username) REFERENCES user(username),\
-      FOREIGN KEY (labId) REFERENCES lab(id),\
       createAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP\
     )', [tableName]);
   }
