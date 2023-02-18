@@ -10,6 +10,7 @@ const fs = require('fs');
 const router = express.Router();
 const configFilename = 'wireguard.zip';
 const vncproxyUrl = process.env.VNCPROXY_URL;
+const secret = process.env.SECRET;
 
 function createUserDir(username) {
   if (!username) {
@@ -29,7 +30,7 @@ router.get('/', auth.checkSignIn, function(req, res, next) {
 router.post('/login', async function(req, res, next) {
   try {
     const user = await User.getUser(req.body.username);
-    const passwordhash = crypto.createHash("sha256").update(req.body.password).digest('base64');
+    const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
     if (!user || passwordhash !== user.password) {
       throw createError(401, 'StudentId or password incorrect');
     }
@@ -54,7 +55,8 @@ router.post('/login', async function(req, res, next) {
 });
 
 router.post('/add', async function(req, res, next) {
-  User.addScore(req.body.username, req.body.password, req.body.studentId)
+  const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
+  User.addScore(req.body.username, passwordhash, req.body.studentId)
 });
 
 router.get('/config', auth.checkSignIn, async function(req, res, next) {
