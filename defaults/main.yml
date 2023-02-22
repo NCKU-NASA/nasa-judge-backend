@@ -1,0 +1,13 @@
+url: http://localhost
+port: 3000
+dbname: nasa
+dbuser: nasa
+dbpassword: nasa
+smtphost: smtp.gmail.com
+smtpport: 465
+smtpuser: ""
+smtppassword: ""
+studentmaildomain: "gmail.com"
+secret: nasa
+judgeurl: http://localhost:8000
+vncproxyurl: http://localhost:4000

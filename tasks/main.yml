@@ -1,0 +1,55 @@
+- name: Stop judge
+  systemd: 
+    name: nasajudgebackend
+    state: stopped
+  become: true
+  ignore_errors: true
+
+- name: Init os var
+  include_vars: "vars/{{ ansible_system | lower }}.yml"
+
+- name: Add nasa user
+  user:
+    name: nasa
+    generate_ssh_key: yes
+  become: true
+
+- name: Copy judge backend directory
+  copy:
+    src: "src/"
+    dest: "{{ nasajudgebackenddir }}/"
+    owner: nasa
+    group: nasa
+  become: true
+
+- name: Check config files exist
+  stat:
+    path: "{{ nasajudgebackenddir }}/{{ item }}"
+  become: true
+  register: config
+  with_items:
+    - .env
+
+- name: Copy config files
+  template:
+    src: "templates/config/{{ item.item }}"
+    dest: "{{ nasajudgebackenddir }}/{{ item.item }}"
+    owner: nasa
+    group: nasa
+  become: true
+  when: not item.stat.exists
+  with_items: "{{ config.results }}"
+
+- name: Install npm package
+  command:
+    cmd: npm install
+    chdir: "{{ nasajudgebackenddir }}"
+  become: true
+  become_user: nasa
+
+- name: Copy systemd
+  template:
+    src: "templates/systemd/nasajudgebackend.service"
+    dest: "{{ etc }}/systemd/system/nasajudgebackend.service"
+  become: true
+  notify: Start judge
