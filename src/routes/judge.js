@@ -30,8 +30,6 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
     });
     if(!allow) throw createError(404);
     const ipindex = userdata.ipindex;
-    const fileContents = await placeUploadFiles(req.files, username, lab);
-    const inputContents = placeInputs(req.body, lab);
 
     // send request to judge server
     const body = {
@@ -88,7 +86,7 @@ function calcScore(judgeResult) {
   for (var key in judgeResult) {
     judgeResult[key].forEach((result) => {
       if (result.ans === true) {
-        score += result.weight;
+        score += parseInt(result.weight);
       }
     })
   }

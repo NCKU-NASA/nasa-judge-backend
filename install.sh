@@ -60,6 +60,7 @@ do
 done
 
 read -p "Enter database user $dbuser Password: " -s dbpassword
+echo
 
 ansible-galaxy collection install -r $dirpath/requirements.yml -f
 ansible-galaxy role install -r $dirpath/requirements.yml -f

@@ -40,7 +40,7 @@
   when: not item.stat.exists
   with_items: "{{ config.results }}"
 
-- name: Copy install npm package
+- name: Install npm package
   command:
     cmd: npm install
     chdir: "{{ nasajudgebackenddir }}"

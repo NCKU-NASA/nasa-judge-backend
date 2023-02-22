@@ -52,12 +52,12 @@ router.post('/add', async function(req, res, next) {
   try {
     username = req.body.username.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
     studentId = req.body.studentId.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
-    email = req.body.email.replace(/[^0-9a-zA-Z.@_]/, "");
+    email = req.body.email.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
     if(!username || !req.body.password || !email) throw createError(401, "invalid input");
-    const userdata = await User.getUser();
+    const userdata = await User.getUser(username);
     if(userdata) throw createError(401, "user exist");
     emailpart = email.split("@");
-    if(emailpart[0] != "" && (emailpart[0] != studentId or emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
+    if(emailpart[0] != "" && (emailpart[0] != studentId || emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
     const password = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
     if(await Confirm.checkConfirmExist(username, studentId, email)) throw createError(401, "Confirm exist. Please wait 5 min.");
     res.send(await Confirm.newConfirm(username, password, studentId, email))
@@ -67,10 +67,14 @@ router.post('/add', async function(req, res, next) {
 });
 
 router.get('/confirm/:token', async function(req, res, next) {
+  try {
     const confirmdata = await Confirm.popConfirm(req.params.token);
     await User.addUser(confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email);
     res.redirect('/');
-}
+  } catch (err) {
+    res.sendStatus(404);
+  }
+});
 
 router.get('/config', auth.checkSignIn, async function(req, res, next) {
   try { 
@@ -80,7 +84,7 @@ router.get('/config', auth.checkSignIn, async function(req, res, next) {
     const result = await judgeapi.post('download/userconfig', userdata, {
         responseType: 'arraybuffer',
     });
-    if(!result.alive) return;
+    if(!result.alive) throw createError(404);
     res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
                        'Content-Type':result.headers['content-type']});
     res.write(Buffer.from(result.data,'binary'),'binary');

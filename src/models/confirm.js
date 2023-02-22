@@ -1,11 +1,11 @@
-const con = require('../utils/database');
-const email = require('../utils/email');
-const fs = require('fs');
-const hbs = require('hbs');
-const crypto = require("crypto");
-const secret = process.env.SECRET;
-const backendurl = process.env.URL;
-const tableName = 'confirm';
+const con = require('../utils/database'); 
+const emailsender = require('../utils/email'); 
+const fs = require('fs'); 
+const hbs = require('hbs'); 
+const crypto = require("crypto"); 
+const secret = process.env.SECRET; 
+const backendurl = process.env.URL; 
+const tableName = 'confirm'; 
 const timeout = 300;
 
 function isExists() {
@@ -15,7 +15,7 @@ function isExists() {
       if (err) {
         reject(err);
       }
-      resolve(result.length === 1);
+      else resolve(result.length === 1);
     });
   });
 }
@@ -33,9 +33,24 @@ isExists().then((result) => {
   }
 });
 
+Date.prototype.toISOZoneString = function () {
+  let pad =(n)=>(n < 10)?'0' + n:n;
+  let hours_offset = this.getTimezoneOffset() / 60;
+  let offset_date = this.setHours(this.getHours() - hours_offset);
+  let symbol = (hours_offset >= 0) ? "-" : "+";
+  let time_zone = symbol+pad(Math.abs(hours_offset))+ ":00";
+  
+  return this.getUTCFullYear() +
+    '-' + pad(this.getUTCMonth() + 1) +
+    '-' + pad(this.getUTCDate()) +
+    ' ' + pad(this.getUTCHours()) +
+    ':' + pad(this.getUTCMinutes()) +
+    ':' + pad(this.getUTCSeconds());
+};
+
 function deleteExpired() {
   return new Promise((resolve, reject) => {
-    const leasttime = new Date(Date.now() - (timeout * 1000)).toISOString().slice(0, 19).replace('T', ' ');
+    const leasttime = new Date(Date.now() - (timeout * 1000)).toISOZoneString();
     con.query('DELETE FROM ?? WHERE createAt<?'
       , [tableName, leasttime], (err, result) => {
       if (err) reject(err);
@@ -51,7 +66,7 @@ async function popConfirm(token) {
       reject('token empty');
     }
     con.query('SELECT * FROM ?? WHERE token=? LIMIT 1'
-      , [tableName, username], (err, result) => {
+      , [tableName, token], (err, result) => {
       if (err) reject(err);
       else if(result.length === 0) resolve(undefined);
       else resolve(result[0]);
@@ -62,7 +77,7 @@ async function popConfirm(token) {
       reject('token empty');
     }
     con.query('DELETE FROM ?? WHERE token=?'
-      , [tableName, username], (err, result) => {
+      , [tableName, token], (err, result) => {
       if (err) reject(err);
       else resolve();
     });
@@ -94,9 +109,9 @@ async function newConfirm(username, password, studentId, email) {
       }
     });
   });
-  const template = hbs.compile(fs.readFileSync('../files/mail.html', 'utf8'));
+  const template = hbs.compile(fs.readFileSync('files/mail.html', 'utf8'));
 
-  email.sendMail({
+  emailsender.sendMail({
       to: email,
       subject: "Activate NASAJudge account",
       html: template({

@@ -15,6 +15,7 @@
           host: "%"
           password: "{{ dbpassword }}"
           priv: "{{ dbname }}.*:ALL"
+      ignore_errors: yes
 
     - role: jimmy01240397.nodejs 
 

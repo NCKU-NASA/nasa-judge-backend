@@ -1,5 +1,7 @@
+const crypto = require("crypto");
 const con = require('../utils/database');
 const judgeapi = require('../utils/judgeapi');
+const secret = process.env.SECRET;
 const tableName = 'user';
 
 function isExists() {
@@ -9,22 +11,42 @@ function isExists() {
       if (err) {
         reject(err);
       }
-      resolve(result.length === 1);
+      else resolve(result.length === 1);
     });
   });
 }
 
 isExists().then((result) => {
-  if (!result) {
-    con.query('CREATE TABLE ?? (\
-      username varchar(255) PRIMARY KEY,\
-      password varchar(255),\
-      studentId varchar(255) NOT NULL UNIQUE,\
-      email varchar(255) NOT NULL UNIQUE,\
-      ipindex int NOT NULL UNIQUE AUTO_INCREMENT,\
-      groups JSON\
-    )', [tableName]);
-  }
+  (async function() {
+    if (!result) {
+      await new Promise((resolve,reject) => {
+        con.query('CREATE TABLE ?? (\
+          username varchar(255) PRIMARY KEY,\
+          password varchar(255),\
+          studentId varchar(255) NOT NULL UNIQUE,\
+          email varchar(255) NOT NULL UNIQUE,\
+          ipindex int NOT NULL UNIQUE AUTO_INCREMENT,\
+          groups JSON\
+        )', [tableName], (err, result) => {
+          if(err) reject(err);
+	  else resolve();
+	});
+      });
+      await new Promise((resolve,reject) => {
+        con.query('ALTER TABLE ?? AUTO_INCREMENT = 1', [tableName], (err, result) => {
+          if(err) reject(err);
+	  else resolve();
+	});
+      });
+    }
+    const userdata = await getUser(process.env.DB_USER);
+    if (!userdata) {
+      try {
+    	const password = crypto.createHmac("sha256", secret).update(process.env.DB_PASSWD).digest('base64');
+        await addUser(process.env.DB_USER, password, "", "", groups=["admin"]);
+      } catch(err) {}
+    }
+  })();
 });
 
 function getUser(username) {
@@ -88,13 +110,13 @@ function getUsers() {
   });
 }
 
-async function addUser(username, password, studentId, email) {
-  const groups = JSON.stringify(["guest"]);
+async function addUser(username, password, studentId, email, groups=["guest"]) {
+  groups = JSON.stringify(groups);
   const alive = await judgeapi.get("alive");
   if(!alive.alive) throw "not alive";
   let body = await getUser(username);
   if(!body) {
-    await return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       con.query('INSERT INTO ?? (username, password, studentId, email, groups) VALUES (?, ?, ?, ?, ?)'
         , [tableName, username, password, studentId, email, groups], (err) => {
         if (err) {

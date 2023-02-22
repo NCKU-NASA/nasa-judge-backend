@@ -55,7 +55,7 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
     const result = await judgeapi.get(`/download/${req.params.labId}/description`, {
         responseType: 'arraybuffer',
     });
-    if(!result.alive) return;
+    if(!result.alive) throw createError(404);
     res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
                        'Content-Type':result.headers['content-type']});
     res.write(Buffer.from(result.data,'binary'),'binary');
@@ -92,7 +92,7 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
     const result = await judgeapi.get(path, {
         responseType: 'arraybuffer',
     });
-    if(!result.alive) return;
+    if(!result.alive) throw createError(404);
     res.writeHead(200,{'Content-Disposition':result.headers['content-disposition'], 
                        'Content-Type':result.headers['content-type']});
     res.write(Buffer.from(result.data,'binary'),'binary');

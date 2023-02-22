@@ -34,7 +34,8 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   console.error('ERROR: ' + err.message);
-  res.sendStatus(err.status || 500);
+  if(!err.status || !err.message) res.sendStatus(err.status || 500);
+  else res.status(err.status || 500).send(err.message);
 });
 
 module.exports = app;

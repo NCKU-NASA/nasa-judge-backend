@@ -9,7 +9,7 @@ function isExists() {
       if (err) {
         reject(err);
       }
-      resolve(result.length === 1);
+      else resolve(result.length === 1);
     });
   });
 }
