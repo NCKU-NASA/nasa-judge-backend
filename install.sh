@@ -7,6 +7,7 @@ printhelp()
 	echo "Usage: $0 [options]
 Options:
   -h, --help                            display this help message and exit.
+  -u, --url URL                         backend url.
   -p, --port PORT                       listen port.
   -n, --dbname NAME                     mysql database name.
   -u, --dbuser USERNAME                 mysql user.
@@ -20,6 +21,7 @@ dirpath=$(dirname "$0")
 judgeurl="http://localhost:8000"
 vncproxyurl="http://localhost:4000"
 port="3000"
+url="http://localhost"
 dbname="nasa"
 dbuser="nasa"
 
@@ -28,6 +30,10 @@ do
     case "$1" in
         -h|--help)
             printhelp
+            ;;
+        -u|--url)
+            shift
+            url=$1
             ;;
         -p|--port)
             shift
@@ -58,7 +64,7 @@ read -p "Enter database user $dbuser Password: " -s dbpassword
 ansible-galaxy collection install -r $dirpath/requirements.yml -f
 ansible-galaxy role install -r $dirpath/requirements.yml -f
 
-ansible-playbook $dirpath/setup.yml -e "{\"port\":$port,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
+ansible-playbook $dirpath/setup.yml -e "{\"port\":$port,\"url\":$url,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
 
 echo ""
 echo ""

@@ -19,7 +19,8 @@ isExists().then((result) => {
     con.query('CREATE TABLE ?? (\
       username varchar(255) PRIMARY KEY,\
       password varchar(255),\
-      studentId varchar(255),\
+      studentId varchar(255) NOT NULL UNIQUE,\
+      email varchar(255) NOT NULL UNIQUE,\
       ipindex int NOT NULL UNIQUE AUTO_INCREMENT,\
       groups JSON\
     )', [tableName]);
@@ -87,12 +88,15 @@ function getUsers() {
   });
 }
 
-async function addUser(username, password, studentId) {
-  var groups = JSON.stringify(["guest"]);
-  const query = () => {
-    return new Promise((resolve, reject) => {
-      con.query('INSERT INTO ?? (username, password, studentId, groups) VALUES (?, ?, ?, ?)'
-        , [tableName, username, password, studentId, groups], (err) => {
+async function addUser(username, password, studentId, email) {
+  const groups = JSON.stringify(["guest"]);
+  const alive = await judgeapi.get("alive");
+  if(!alive.alive) throw "not alive";
+  let body = await getUser(username);
+  if(!body) {
+    await return new Promise((resolve, reject) => {
+      con.query('INSERT INTO ?? (username, password, studentId, email, groups) VALUES (?, ?, ?, ?, ?)'
+        , [tableName, username, password, studentId, email, groups], (err) => {
         if (err) {
           reject(err);
         } else {
@@ -100,16 +104,9 @@ async function addUser(username, password, studentId) {
         }
       });
     });
-  };
-  const alive = await judgeapi.get("alive");
-  if(!alive.alive) throw "not alive";
-  let body = await getUser(username);
-  if(!body) {
-    await query();
     body = await getUser(username);
   }
-  const result = await judgeapi.post("builduser", body);
-  return result.data;
+  judgeapi.post("builduser", body);
 }
 
 module.exports = {

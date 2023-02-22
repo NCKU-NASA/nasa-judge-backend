@@ -18,19 +18,17 @@ const upload = multer({ dest: os.tmpdir() });
 router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = User.getUser(username);
+    const userdata = await User.getUser(username);
+    if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.body.id);
+    if(!lab) throw createError(404);
     let allow = lab.promissions.includes("all");
-    if(!allow) {
-      userdata.groups.forEach(function(group) {
-        if(lab.promissions.includes(group)) {
-            allow = true;
-        }
-      });
-    }
-    if (!lab || !allow) {
-      throw createError(404);
-    }
+    userdata.groups.forEach(function(group) {
+      if(lab.promissions.includes(group)) {
+          allow = true;
+      }
+    });
+    if(!allow) throw createError(404);
     const ipindex = userdata.ipindex;
     const fileContents = await placeUploadFiles(req.files, username, lab);
     const inputContents = placeInputs(req.body, lab);
@@ -78,7 +76,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
   removeTempFiles(req.files);
 });
 
-router.post('/canjudge', auth.checkSignIn, async function(req, res, next) {
+router.get('/canjudge', auth.checkSignIn, async function(req, res, next) {
   const username = req.session.user.username;
   const result = await judgeapi.post("canjudge", {username});
   if(!result.alive) res.send(result.alive);

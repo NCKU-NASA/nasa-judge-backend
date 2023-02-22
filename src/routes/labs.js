@@ -11,7 +11,11 @@ const router = express.Router();
 router.get('/', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = User.getUser(username);
+    const userdata = await User.getUser(username);
+    if(!userdata) { 
+      res.send({ labs: [] });
+      return;
+    }
     const labs = await Lab.getLabs();
     for(var i = 0; i < labs.length; i++) {
       let allow = labs[i].promissions.includes("all");
@@ -21,8 +25,10 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
               allow = true;
           }
         });
-        labs.splice(i,i);
-        i--;
+        if(!allow) {
+          labs.splice(i,1);
+          i--;
+        }
       }
     }
     res.send({ labs });
@@ -34,6 +40,18 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
 //router.use('/public', auth.checkSignIn, express.static(path.join(__dirname, '../files/public')));
 router.get('/:labId/download/description', auth.checkSignIn, async function(req, res, next) {
   try { 
+    const username = req.session.user.username;
+    const userdata = await User.getUser(username);
+    if(!userdata) throw createError(404);
+    const lab = await Lab.getLab(req.params.labId);
+    if(!lab) throw createError(404);
+    let allow = lab.promissions.includes("all");
+    userdata.groups.forEach(function(group) {
+      if(lab.promissions.includes(group)) {
+          allow = true;
+      }
+    });
+    if(!allow) throw createError(404);
     const result = await judgeapi.get(`/download/${req.params.labId}/description`, {
         responseType: 'arraybuffer',
     });
@@ -43,15 +61,28 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
     res.write(Buffer.from(result.data,'binary'),'binary');
     res.end(null, 'binary');
   } catch(err) {
+    if(err && err.response && err.response.status && err.response.status == 404){
+      res.sendStatus(404);
+    } else {
       next(err);
+    }
   }
 });
 
 router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
-    const userdata = User.getUser(username);
+    const userdata = await User.getUser(username);
+    if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.params.labId);
+    if(!lab) throw createError(404);
+    let allow = lab.promissions.includes("all");
+    userdata.groups.forEach(function(group) {
+      if(lab.promissions.includes(group)) {
+          allow = true;
+      }
+    });
+    if(!allow) throw createError(404);
     const contents = lab.contents.filter((content) => content.type === 'download' && content.name === req.params.filename);
     if(contents.length !== 1) return;
     let path;
@@ -67,7 +98,11 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
     res.write(Buffer.from(result.data,'binary'),'binary');
     res.end(null, 'binary');
   } catch(err) {
+    if(err && err.response && err.response.status && err.response.status == 404){
+      res.sendStatus(404);
+    } else {
       next(err);
+    }
   }
 });
 
