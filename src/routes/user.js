@@ -40,11 +40,11 @@ async function loginsuccess(req, res, username) {
 
 router.post('/login', async function(req, res, next) {
   try {
-    if(!req.body.username.toLowerCase() || !req.body.password) throw createError(401, "StudentId or password incorrect");
+    if(!req.body.username.toLowerCase() || !req.body.password) throw createError(401, "username or password incorrect");
     const user = await User.getUser(req.body.username.toLowerCase());
     const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
     if (!user || passwordhash !== user.password) {
-      throw createError(401, 'StudentId or password incorrect');
+      throw createError(401, 'username or password incorrect');
     }
     await loginsuccess(req, res, user.username);
     res.send('Login success');
@@ -55,9 +55,9 @@ router.post('/login', async function(req, res, next) {
 
 router.post('/add', async function(req, res, next) {
   try {
-    username = req.body.username.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
-    studentId = req.body.studentId.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
-    email = req.body.email.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
+    username = req.body.username.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
+    studentId = req.body.studentId.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
+    email = req.body.email.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
     if(!username || !req.body.password || !email) throw createError(401, "invalid input");
     let userdata = await User.getUser(username);
     if(userdata) throw createError(401, "user exist");
