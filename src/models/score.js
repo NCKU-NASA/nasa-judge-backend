@@ -28,65 +28,54 @@ isExists().then((result) => {
   }
 });
 
-function getMaxLabScore(username, labId) {
-  return new Promise((resolve, reject) => {
-    Lab.getLab(labId).then((lab) => {
-      Promise.all(lab.deadlines.map((deadline) => {
-        new Promise((resolve, reject) => {
-          con.query('SELECT MAX(score) AS maxScore FROM ?? WHERE username=? AND labId=? AND createAt<?'
-          , [tableName, username, labId, (deadline.time || '9999-12-30 23:59:59')], (err, row) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve((row.length !== 1) ? 0 : row[0].maxScore*(deadline.score || 0));
-            }
-          });
-        });
-      })).then((result) => {
-          resolve(Math.max(...result));
-      }, (error) => {
-          reject(error);
-      });
-    }, (error) => {
-      reject(error);
-    });
-  });
-}
-
-function getResult(username = '%', labId = '%', usedeadline = false) {
-  return new Promise((resolve, reject) => {
-    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ?', [tableName, username, labId], (err, row) => {
-      Lab.getLabs().then((labs) => {
-        labs = Object.fromEntries(labs.map(lab => {
-          let { id, ...obj } = lab;
-          return [lab.id, obj];
-        }));
+async function getMaxLabScore(username, labId) {
+  const lab = await Lab.getLab(labId);
+  
+  const result = await Promise.all(lab.deadlines.map((deadline) => {
+    return new Promise((resolve, reject) => {
+      con.query('SELECT MAX(score) AS maxScore FROM ?? WHERE username=? AND labId=? AND createAt<?'
+      , [tableName, username, labId, (deadline.time || '9999-12-30 23:59:59')], (err, row) => {
         if (err) {
           reject(err);
+        } else {
+          resolve((row.length !== 1) ? 0 : row[0].maxScore*(deadline.score || 0));
         }
-        rows.forEach((row) => {
-          try {
-            row.result = JSON.parse(row.result);
-            if(usedeadline)
-            {
-              for(var i = 0; i < labs[row.labId].deadlines.length; i++) {
-                if(Date.now() < Date.parse(labs[row.labId].deadlines[i].time)){
-                  row.score = row.score * labs[row.labId].deadlines[i].score;
-                  break;
-                }
+      });
+    });
+  }))
+
+  return Math.max(...result);
+}
+
+async function getResult(username = '%', labId = '%', usedeadline = false) {
+
+  let labs = await Lab.getLabs();
+  labs = Object.fromEntries(labs.map(lab => {
+    let { id, ...obj } = lab;
+    return [lab.id, obj];
+  }));
+
+  return await new Promise((resolve, reject) => {
+    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ?', [tableName, username, labId], (err, rows) => {
+      rows.forEach((row) => {
+        try {
+          row.result = JSON.parse(row.result);
+          if(usedeadline)
+          {
+            for(var i = 0; i < labs[row.labId].deadlines.length; i++) {
+              if(Date.now() < Date.parse(labs[row.labId].deadlines[i].time)){
+                row.score = row.score * labs[row.labId].deadlines[i].score;
+                break;
               }
             }
-          } catch(err) {
-            reject(err);
           }
-        });
-        resolve(rows);
-      }, (error) => 
-      {
-        reject(error);
+        } catch(err) {
+          reject(err);
+        }
       });
-    })
-  })
+      resolve(rows);
+    }); 
+  });
 }
 
 function addScore(username, labId, score, result) {

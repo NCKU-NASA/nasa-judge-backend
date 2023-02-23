@@ -10,7 +10,7 @@ router.post('/', auth.checkSignIn, async function(req, res, next) {
   const username = req.session.user.username;
   const userdata = await User.getUser(username);
   if(!userdata.groups.includes("admin")) throw createError(404);
-  res.send(Score.getResult(req.body.username, req.body.labId, req.body.usedeadline));
+  res.send(await Score.getResult(req.body.username, req.body.labId, req.body.usedeadline));
 });
 
 router.get('/:labId', auth.checkSignIn, async function(req, res, next) {
