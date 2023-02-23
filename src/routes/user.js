@@ -41,7 +41,7 @@ async function loginsuccess(req, res, username) {
 router.post('/login', async function(req, res, next) {
   try {
     if(!req.body.username.toLowerCase() || !req.body.password) throw createError(401, "username or password incorrect");
-    const user = await User.getUser(req.body.username.toLowerCase());
+    const user = await User.getUser(req.body.username.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase());
     const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
     if (!user || passwordhash !== user.password) {
       throw createError(401, 'username or password incorrect');

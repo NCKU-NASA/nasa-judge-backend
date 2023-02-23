@@ -12,7 +12,7 @@ judgeurl = os.getenv('JUDGE_URL')
 table_name = 'user'
 
 if len(sys.argv) != 3:
-  print('Usage: ./addUser.py <username> <groups>')
+  print('Usage: ./changeUserGroup.py <username> <groups>')
   sys.exit(1)
 
 username = sys.argv[1]
