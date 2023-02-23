@@ -52,7 +52,7 @@ isExists().then((result) => {
 function getUser(username) {
   return new Promise((resolve, reject) => {
     if (!username) {
-      reject('username empty');
+      resolve(undefined);
     }
     con.query('SELECT * FROM ?? WHERE username=? LIMIT 1'
       , [tableName, username], (err, result) => {
