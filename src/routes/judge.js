@@ -75,10 +75,14 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
 });
 
 router.get('/canjudge', auth.checkSignIn, async function(req, res, next) {
-  const username = req.session.user.username;
-  const result = await judgeapi.post("canjudge", {username});
-  if(!result.alive) res.send(result.alive);
-  res.send(result.data);
+  try {
+    const username = req.session.user.username;
+    const result = await judgeapi.post("canjudge", {username});
+    if(!result.alive) res.send(result.alive);
+    res.send(result.data);
+  } catch(err) {
+    next(err);
+  }
 });
 
 function calcScore(judgeResult) {

@@ -7,10 +7,14 @@ const auth = require('../middlewares/auth');
 const router = express.Router();
 
 router.post('/', auth.checkSignIn, async function(req, res, next) {
-  const username = req.session.user.username;
-  const userdata = await User.getUser(username);
-  if(!userdata.groups.includes("admin")) throw createError(404);
-  res.send(await Score.getResult(req.body.username, req.body.labId, req.body.usedeadline));
+  try {
+    const username = req.session.user.username;
+    const userdata = await User.getUser(username);
+    if(!userdata.groups.includes("admin")) throw createError(404);
+    res.send(await Score.getResult(req.body.username, req.body.labId, req.body.usedeadline));
+  } catch(err) {
+    next(err);
+  }
 });
 
 router.get('/:labId', auth.checkSignIn, async function(req, res, next) {
