@@ -37,6 +37,6 @@ if len(res) == 0:
   sys.exit(0)
 
 sql = f'UPDATE `{table_name}` SET groups=%s WHERE username=%s'
-cur.execute(sql, (username, groups))
+cur.execute(sql, (groups, username))
 db.commit()
 db.close()

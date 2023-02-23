@@ -23,7 +23,7 @@ isExists().then((result) => {
         con.query('CREATE TABLE ?? (\
           username varchar(255) PRIMARY KEY,\
           password varchar(255),\
-          studentId varchar(255) NOT NULL UNIQUE,\
+          studentId varchar(255) NOT NULL,\
           email varchar(255) NOT NULL UNIQUE,\
           ipindex int NOT NULL UNIQUE AUTO_INCREMENT,\
           groups JSON\
@@ -56,6 +56,48 @@ function getUser(username) {
     }
     con.query('SELECT * FROM ?? WHERE username=? LIMIT 1'
       , [tableName, username], (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      if(result.length === 0) resolve(undefined);
+      try {
+        result[0].groups = JSON.parse(result[0].groups);
+      } catch(err) {
+        reject(err);
+      }
+      resolve(result[0]);
+    });
+  });
+}
+
+function getUserbyEmail(email) {
+  return new Promise((resolve, reject) => {
+    if (!email) {
+      reject('email empty');
+    }
+    con.query('SELECT * FROM ?? WHERE email=? LIMIT 1'
+      , [tableName, email], (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      if(result.length === 0) resolve(undefined);
+      try {
+        result[0].groups = JSON.parse(result[0].groups);
+      } catch(err) {
+        reject(err);
+      }
+      resolve(result[0]);
+    });
+  });
+}
+
+function getUserbyStudentId(studentId) {
+  return new Promise((resolve, reject) => {
+    if (!studentId) {
+      resolve(undefined);
+    }
+    con.query('SELECT * FROM ?? WHERE studentId=? LIMIT 1'
+      , [tableName, studentId], (err, result) => {
       if (err) {
         reject(err);
       }
@@ -135,6 +177,8 @@ module.exports = {
   isExists,
   addUser,
   getUserbyipindex,
+  getUserbyEmail,
+  getUserbyStudentId,
   getUser,
   getUsers,
 };

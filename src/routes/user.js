@@ -22,19 +22,13 @@ router.get('/', auth.checkSignIn, function(req, res, next) {
   }
 })
 
-router.post('/login', async function(req, res, next) {
-  try {
-    const user = await User.getUser(req.body.username.toLowerCase());
-    const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
-    if (!user || passwordhash !== user.password) {
-      throw createError(401, 'StudentId or password incorrect');
-    }
+async function loginsuccess(req, res, username) {
     req.session.user = {
-      username: user.username,
+      username,
     };
     
     const body = {
-      username: user.username,
+      username,
     };
     try
     {
@@ -42,6 +36,17 @@ router.post('/login', async function(req, res, next) {
         res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""))
     }
     catch(err){}
+}
+
+router.post('/login', async function(req, res, next) {
+  try {
+    if(!req.body.username.toLowerCase() || !req.body.password) throw createError(401, "StudentId or password incorrect");
+    const user = await User.getUser(req.body.username.toLowerCase());
+    const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
+    if (!user || passwordhash !== user.password) {
+      throw createError(401, 'StudentId or password incorrect');
+    }
+    await loginsuccess(req, res, user.username);
     res.send('Login success');
   } catch(err) {
     next(err);
@@ -54,10 +59,14 @@ router.post('/add', async function(req, res, next) {
     studentId = req.body.studentId.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
     email = req.body.email.replace(/[^0-9a-zA-Z.@_]/, "").toLowerCase();
     if(!username || !req.body.password || !email) throw createError(401, "invalid input");
-    const userdata = await User.getUser(username);
+    let userdata = await User.getUser(username);
     if(userdata) throw createError(401, "user exist");
+    userdata = await User.getUserbyStudentId(studentId);
+    if(userdata) throw createError(401, "studentId exist");
+    userdata = await User.getUserbyEmail(email);
+    if(userdata) throw createError(401, "email exist");
     emailpart = email.split("@");
-    if(emailpart[0] != "" && (emailpart[0] != studentId || emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
+    if(studentId != "" && (emailpart[0] != studentId || emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
     const password = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
     if(await Confirm.checkConfirmExist(username, studentId, email)) throw createError(401, "Confirm exist. Please wait 5 min.");
     res.send(await Confirm.newConfirm(username, password, studentId, email))
@@ -70,7 +79,8 @@ router.get('/confirm/:token', async function(req, res, next) {
   try {
     const confirmdata = await Confirm.popConfirm(req.params.token);
     await User.addUser(confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email);
-    res.redirect('/');
+    await loginsuccess(req, res, confirmdata.username);
+    res.redirect('/#/Lab');
   } catch (err) {
     res.sendStatus(404);
   }
