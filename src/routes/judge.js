@@ -53,7 +53,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       }}, lab),
     };
     const result = await judgeapi.post("judge", body);
-    if(!result.alive) res.send({ alive: result.alive });
+    if(!result.alive || !result.data.alive || !result.data.results) res.send({ alive: false });
 
     let score = calcScore(result.data.results);
 
