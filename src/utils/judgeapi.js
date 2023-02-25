@@ -19,40 +19,24 @@ function checkalive(timeout) {
 
 ['delete', 'get', 'head', 'options'].forEach(method => {
   /*eslint func-names:0*/
-  module.exports[method] = function(url, config) {
-    return new Promise((resolve, reject) => {
-      checkalive((config || {}).timeout || 5000).then((alive) => {
-        if(!alive) return {alive};
-        delete (config || {}).timeout;
-        axios[method](judgeUrl + "/" + url.replace(/^((.*:\/\/)[^\/]*)?\/?/, ""), config).then((result) => {
-          result.alive = alive;
-          resolve(result);
-        }, (error) => {
-            reject(error);
-        });
-      }, (error) => {
-        reject(error);
-      });
-    });
+  module.exports[method] = async function(url, config) {
+    const alive = await checkalive((config || {}).timeout || 5000);
+    if(!alive) return {alive};
+    delete (config || {}).timeout;
+    const result = await axios[method](judgeUrl + "/" + url.replace(/^((.*:\/\/)[^\/]*)?\/?/, ""), config);
+    result.alive = alive;
+    return result
   };
 });
 
 ['post', 'put', 'patch'].forEach(method => {
   /*eslint func-names:0*/
-  module.exports[method] = function(url, data, config) {
-    return new Promise((resolve, reject) => {
-      checkalive((config || {}).timeout || 5000).then((alive) => {
-        if(!alive) return {alive};
-        delete (config || {}).timeout;
-        axios[method](judgeUrl + "/" + url.replace(/^((.*:\/\/)[^\/]*)?\/?/, ""), data, config).then((result) => {
-          result.alive = alive;
-          resolve(result);
-        }, (error) => {
-            reject(error);
-        });
-      }, (error) => {
-        reject(error);
-      });
-    });
+  module.exports[method] = async function(url, data, config) {
+    const alive = await checkalive((config || {}).timeout || 5000);
+    if(!alive) return {alive};
+    delete (config || {}).timeout;
+    const result = await axios[method](judgeUrl + "/" + url.replace(/^((.*:\/\/)[^\/]*)?\/?/, ""), data, config);
+    result.alive = alive;
+    return result;
   };
 });

@@ -53,8 +53,12 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       }}, lab),
     };
     const result = await judgeapi.post("judge", body);
-    if(!result.alive || !result.data.alive || !result.data.results) res.send({ alive: false });
-
+    if(!result.alive) throw createError(404, 'Api server is not alive');
+    if(!result.data.alive || !result.data.results) 
+    {
+      res.send({ alive: false });
+      return;
+    }
     let score = calcScore(result.data.results);
 
     // save score
@@ -78,8 +82,8 @@ router.get('/canjudge', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
     const result = await judgeapi.post("canjudge", {username});
-    if(!result.alive) res.send(result.alive);
-    res.send(result.data);
+    if(!result.alive) throw createError(404, 'Api server is not alive');
+    else res.send(result.data);
   } catch(err) {
     next(err);
   }
