@@ -8,7 +8,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/pubkey', async function(req, res, next) {
   try { 
-    const result = await judgeapi.get(`/download/pubkey`);
+    const result = await judgeapi.get(`/pubkey`);
     if(!result.alive) throw createError(404);
     res.send(result.data);
   } catch(err) {

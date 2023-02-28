@@ -14,9 +14,10 @@ const vncproxyUrl = process.env.VNCPROXY_URL;
 const secret = process.env.SECRET;
 const studentmaildomain = process.env.STUDENT_EMAIL_DOMAIN;
 
-router.get('/', auth.checkSignIn, function(req, res, next) {
+router.get('/', auth.checkSignIn, async function(req, res, next) {
   try {
-    res.send({ user: req.session.user.username });
+    const userdata = await User.getUser({"username":req.session.user.username});
+    res.send({ username: userdata.username, studentId: userdata.studentId });
   } catch(err) {
     next(err);
   }
@@ -40,11 +41,17 @@ async function loginsuccess(req, res, username) {
 
 router.post('/login', async function(req, res, next) {
   try {
-    if(!req.body.username.toLowerCase() || !req.body.password) throw createError(401, "username or password incorrect");
-    const user = await User.getUser(req.body.username.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase());
-    const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
-    if (!user || passwordhash !== user.password) {
-      throw createError(401, 'username or password incorrect');
+    if(!req.body.username.toLowerCase()) throw createError(401, "username or password incorrect");
+    const user = await User.getUser({"username": req.body.username.replaceAll(/[^0-9a-zA-Z]/ig, "").toLowerCase()});
+
+    let nowlogin;
+    if(req.session && req.session.user) nowlogin = await User.getUser({"username":req.session.user.username});
+    if(!nowlogin || !nowlogin.groups.includes("admin")) {
+      if(!req.body.password) throw createError(401, "username or password incorrect");
+      const passwordhash = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
+      if (!user || passwordhash !== user.password) {
+        throw createError(401, 'username or password incorrect');
+      }
     }
     await loginsuccess(req, res, user.username);
     res.send('Login success');
@@ -55,15 +62,15 @@ router.post('/login', async function(req, res, next) {
 
 router.post('/add', async function(req, res, next) {
   try {
-    username = req.body.username.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
-    studentId = req.body.studentId.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
-    email = req.body.email.replaceAll(/[^0-9a-zA-Z.@_]/ig, "").toLowerCase();
+    username = req.body.username.replaceAll(/[^0-9a-zA-Z]/ig, "").toLowerCase();
+    studentId = req.body.studentId.replaceAll(/[^0-9a-zA-Z]/ig, "").toLowerCase();
+    email = req.body.email.replaceAll(/[^0-9a-zA-Z@.]/ig, "").toLowerCase();
     if(!username || !req.body.password || !email) throw createError(401, "invalid input");
-    let userdata = await User.getUser(username);
+    let userdata = await User.getUser({username});
     if(userdata) throw createError(401, "user exist");
-    userdata = await User.getUserbyStudentId(studentId);
+    userdata = await User.getUser({studentId});
     if(userdata) throw createError(401, "studentId exist");
-    userdata = await User.getUserbyEmail(email);
+    userdata = await User.getUser({email});
     if(userdata) throw createError(401, "email exist");
     emailpart = email.split("@");
     if(studentId != "" && (emailpart[0] != studentId || emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
@@ -89,9 +96,9 @@ router.get('/confirm/:token', async function(req, res, next) {
 router.get('/config', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
-    const result = await judgeapi.post('download/userconfig', userdata, {
+    const result = await judgeapi.post('user/config', userdata, {
         responseType: 'arraybuffer',
     });
     if(!result.alive) throw createError(404);
@@ -111,7 +118,7 @@ router.get('/config', auth.checkSignIn, async function(req, res, next) {
 router.get('/alluserdata', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     if(!userdata.groups.includes("admin")) throw createError(404);
     res.send(await User.getUsers())
@@ -123,11 +130,10 @@ router.get('/alluserdata', auth.checkSignIn, async function(req, res, next) {
 router.post('/userdata', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     if(!userdata.groups.includes("admin")) throw createError(404);
-    if(req.body.username) res.send(await User.getUser(req.body.username));
-    else if(req.body.ipindex) res.send(await User.getUserbyipindex(req.body.ipindex));
+    res.send(await User.getUser(req.body));
   } catch (err) {
     next(err);
   }

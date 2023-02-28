@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) { 
       res.send({ labs: [] });
       return;
@@ -41,7 +41,7 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
 router.get('/:labId/download/description', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.params.labId);
     if(!lab) throw createError(404);
@@ -52,7 +52,7 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
       }
     });
     if(!allow) throw createError(404);
-    const result = await judgeapi.get(`/download/${req.params.labId}/description`, {
+    const result = await judgeapi.get(`labs/${req.params.labId}/file/description`, {
         responseType: 'arraybuffer',
     });
     if(!result.alive) throw createError(404);
@@ -72,7 +72,7 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
 router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.params.labId);
     if(!lab) throw createError(404);
@@ -86,8 +86,8 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
     const contents = lab.contents.filter((content) => content.type === 'download' && content.name === req.params.filename);
     if(contents.length !== 1) return;
     let path;
-    if(contents[0].useusername) path = `download/${req.params.labId}/${username}/${req.params.filename}`
-    else path = `download/${req.params.labId}/${req.params.filename}`
+    if(contents[0].useusername) path = `labs/${req.params.labId}/file/${username}/${req.params.filename}`
+    else path = `labs/${req.params.labId}/file/${req.params.filename}`
 
     const result = await judgeapi.get(path, {
         responseType: 'arraybuffer',

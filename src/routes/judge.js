@@ -18,7 +18,7 @@ const upload = multer({ dest: os.tmpdir() });
 router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.body.id);
     if(!lab) throw createError(404);
@@ -52,7 +52,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
         });
       }}, lab),
     };
-    const result = await judgeapi.post("judge", body);
+    const result = await judgeapi.post("score/judge", body);
     if(!result.alive) throw createError(404, 'Api server is not alive');
     if(!result.data.alive || !result.data.results) 
     {
@@ -81,7 +81,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
 router.get('/canjudge', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const result = await judgeapi.post("canjudge", {username});
+    const result = await judgeapi.post("score/canjudge", {username});
     if(!result.alive) throw createError(404, 'Api server is not alive');
     else res.send(result.data);
   } catch(err) {

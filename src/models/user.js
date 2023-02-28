@@ -39,7 +39,7 @@ isExists().then((result) => {
 	});
       });
     }
-    const userdata = await getUser(process.env.DB_USER);
+    const userdata = await getUser({"username":process.env.DB_USER});
     if (!userdata) {
       try {
     	const password = crypto.createHmac("sha256", secret).update(process.env.DB_PASSWD).digest('base64');
@@ -49,88 +49,32 @@ isExists().then((result) => {
   })();
 });
 
-function getUser(username) {
-  return new Promise((resolve, reject) => {
-    if (!username) {
-      resolve(undefined);
-    }
-    con.query('SELECT * FROM ?? WHERE username=? LIMIT 1'
-      , [tableName, username], (err, result) => {
-      if (err) {
-        reject(err);
-      }
-      if(result.length === 0) resolve(undefined);
-      try {
-        result[0].groups = JSON.parse(result[0].groups);
-      } catch(err) {
-        reject(err);
-      }
-      resolve(result[0]);
+async function getUser(userdata) {
+  if (!userdata) return undefined;
+  for (var key in userdata) {
+    const nowresult = await new Promise((resolve, reject) => {
+      con.query(`SELECT * FROM ?? WHERE ${key.replaceAll(/[^0-9a-zA-Z.@_]/ig, "")}=? LIMIT 1`
+        , [tableName, userdata[key]], (err, result) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if(result.length !== 0) {
+          try {
+            result[0].groups = JSON.parse(result[0].groups);
+          } catch(err) {
+            reject(err);
+            return;
+          }
+          resolve(result[0]);
+          return;
+        }
+        resolve(undefined);
+      });
     });
-  });
-}
-
-function getUserbyEmail(email) {
-  return new Promise((resolve, reject) => {
-    if (!email) {
-      reject('email empty');
-    }
-    con.query('SELECT * FROM ?? WHERE email=? LIMIT 1'
-      , [tableName, email], (err, result) => {
-      if (err) {
-        reject(err);
-      }
-      if(result.length === 0) resolve(undefined);
-      try {
-        result[0].groups = JSON.parse(result[0].groups);
-      } catch(err) {
-        reject(err);
-      }
-      resolve(result[0]);
-    });
-  });
-}
-
-function getUserbyStudentId(studentId) {
-  return new Promise((resolve, reject) => {
-    if (!studentId) {
-      resolve(undefined);
-    }
-    con.query('SELECT * FROM ?? WHERE studentId=? LIMIT 1'
-      , [tableName, studentId], (err, result) => {
-      if (err) {
-        reject(err);
-      }
-      if(result.length === 0) resolve(undefined);
-      try {
-        result[0].groups = JSON.parse(result[0].groups);
-      } catch(err) {
-        reject(err);
-      }
-      resolve(result[0]);
-    });
-  });
-}
-
-function getUserbyipindex(ipindex) {
-  return new Promise((resolve, reject) => {
-    if (!ipindex) {
-      reject('ipindex empty');
-    }
-    con.query('SELECT * FROM ?? WHERE ipindex=? LIMIT 1'
-      , [tableName, ipindex], (err, result) => {
-      if (err) {
-        reject(err);
-      }
-      if(result.length === 0) resolve(undefined);
-      try {
-        result[0].groups = JSON.parse(result[0].groups);
-      } catch(err) {
-        reject(err);
-      }
-      resolve(result[0]);
-    });
-  });
+    if(nowresult) return nowresult;
+  }
+  return undefined;
 }
 
 function getUsers() {
@@ -154,9 +98,9 @@ function getUsers() {
 
 async function addUser(username, password, studentId, email, groups=["guest"]) {
   groups = JSON.stringify(groups);
-  const alive = await judgeapi.get("alive");
+  const alive = await judgeapi.get("status/alive");
   if(!alive.alive) throw "not alive";
-  let body = await getUser(username);
+  let body = await getUser({username});
   if(!body) {
     await new Promise((resolve, reject) => {
       con.query('INSERT INTO ?? (username, password, studentId, email, groups) VALUES (?, ?, ?, ?, ?)'
@@ -168,17 +112,14 @@ async function addUser(username, password, studentId, email, groups=["guest"]) {
         }
       });
     });
-    body = await getUser(username);
+    body = await getUser({username});
   }
-  judgeapi.post("builduser", body);
+  judgeapi.post("user/build", body);
 }
 
 module.exports = {
   isExists,
   addUser,
-  getUserbyipindex,
-  getUserbyEmail,
-  getUserbyStudentId,
   getUser,
   getUsers,
 };

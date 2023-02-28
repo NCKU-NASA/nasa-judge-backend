@@ -43,5 +43,5 @@ cur.execute(sql, (username, studentId))
 db.commit()
 db.close()
 
-requests.post(f"{judgeurl}/changename", json=userdata)
+requests.post(f"{judgeurl}/user/changename", json=userdata)
 

@@ -6,7 +6,7 @@ module.exports = {}
 function checkalive(timeout) {
   return new Promise((resolve, reject) => {
     try {
-      axios.get(judgeUrl + "/alive", { timeout }).then((resultalive) => {
+      axios.get(judgeUrl + "/status/alive", { timeout }).then((resultalive) => {
         resolve(resultalive.data);
       }, (error) => {
         resolve(false);

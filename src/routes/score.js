@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;
-    const userdata = await User.getUser(username);
+    const userdata = await User.getUser({username});
     if(!userdata.groups.includes("admin")) throw createError(404);
     res.send(await Score.getResult(req.body.username, req.body.labId, req.body.usedeadline));
   } catch(err) {
