@@ -36,11 +36,11 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       labId: lab.id,
       username,
       ipindex,
-      data: await placeDatas({"value":(input) => {
+      data: await placeDatas({"input":(input) => {
         return new Promise((resolve, reject) => {
           resolve(input || "");
         });
-      }, "file":(file) => {
+      }, "upload":(file) => {
         if (!file) throw createError(400, 'The number of files did not match');
         return new Promise((resolve, reject) => {
           fs.readFile(path.join(os.tmpdir(), file.filename), (err, data) => {
