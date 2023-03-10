@@ -6,6 +6,17 @@ const Lab = require('../models/lab');
 const auth = require('../middlewares/auth');
 const router = express.Router();
 
+router.get('/', auth.checkSignIn, async function(req, res, next) {
+  try {
+    const username = req.session.user.username;
+    const userdata = await User.getUser({username});
+    if(!userdata.groups.includes("admin")) throw createError(404);
+    res.send(await Score.getResult());
+  } catch(err) {
+    next(err);
+  }
+});
+
 router.post('/', auth.checkSignIn, async function(req, res, next) {
   try {
     const username = req.session.user.username;

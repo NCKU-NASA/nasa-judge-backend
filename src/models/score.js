@@ -60,14 +60,18 @@ async function getResult(username = '%', labId = '%', usedeadline = false) {
       rows.forEach((row) => {
         try {
           row.result = JSON.parse(row.result);
+          row.createAt = row.createAt.toISOZoneString()
           if(usedeadline)
           {
+            let calced = false;
             for(var i = 0; i < labs[row.labId].deadlines.length; i++) {
-              if(Date.now() < Date.parse(labs[row.labId].deadlines[i].time)){
+              if(Date.parse(row.createAt) < Date.parse(labs[row.labId].deadlines[i].time || '9999-12-30 23:59:59')){
                 row.score = row.score * labs[row.labId].deadlines[i].score;
+                calced = true;
                 break;
               }
             }
+            if(!calced) row.score = 0;
           }
         } catch(err) {
           reject(err);

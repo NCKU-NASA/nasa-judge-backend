@@ -68,8 +68,10 @@ router.post('/add', async function(req, res, next) {
     if(!username || !req.body.password || !email) throw createError(401, "invalid input");
     let userdata = await User.getUser({username});
     if(userdata) throw createError(401, "user exist");
-    userdata = await User.getUser({studentId});
-    if(userdata) throw createError(401, "studentId exist");
+    if(studentId) {
+      userdata = await User.getUser({studentId});
+      if(userdata) throw createError(401, "studentId exist");
+    }
     userdata = await User.getUser({email});
     if(userdata) throw createError(401, "email exist");
     emailpart = email.split("@");

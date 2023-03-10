@@ -31,6 +31,11 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
     if(!allow) throw createError(404);
     const ipindex = userdata.ipindex;
 
+    const uploaddata = {};
+    req.files.forEach((file) => {
+      uploaddata[file.fieldname] = file.filename;
+    });
+
     // send request to judge server
     const body = {
       labId: lab.id,
@@ -43,14 +48,14 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       }, "upload":(file) => {
         if (!file) throw createError(400, 'The number of files did not match');
         return new Promise((resolve, reject) => {
-          fs.readFile(path.join(os.tmpdir(), file.filename), (err, data) => {
+          fs.readFile(path.join(os.tmpdir(), file), (err, data) => {
             if (err) {
               reject(err);
             }
             resolve(Buffer.from(data).toString('base64'));
           });
         });
-      }}, lab),
+      }}, lab, {"input":req.body, "upload":uploaddata}),
     };
     const result = await judgeapi.post("score/judge", body);
     if(!result.alive) throw createError(404, 'Api server is not alive');
@@ -64,12 +69,15 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
     // save score
     await Score.addScore(username, lab.id, score, result.data.results);
 
+    let calced = false;
     for(var i = 0; i < lab.deadlines.length; i++) {
-      if(Date.now() < Date.parse(lab.deadlines[i].time)) {
+      if(Date.parse(new Date().toISOZoneString()) < Date.parse(lab.deadlines[i].time || '9999-12-30 23:59:59')) {
         sorce = score * lab.deadlines[i].score;
+        calced = true;
         break;
       }
     }
+    if(!calced) score = 0;
 
     res.send({ alive: result.data.alive, score, results: result.data.results, stdout: result.data.stdout, stderr: result.data.stderr });
   } catch(err) {
@@ -101,7 +109,7 @@ function calcScore(judgeResult) {
   return score;
 }
 
-async function placeDatas(solve, lab) {
+async function placeDatas(solve, lab, data) {
   return Promise.all(lab.contents.map(async (content) => {
     return {
       type: content.type,
