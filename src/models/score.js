@@ -1,5 +1,6 @@
 const con = require('../utils/database');
 const Lab = require('../models/lab');
+const User = require('../models/user');
 const tableName = 'score';
 
 function isExists() {
@@ -47,21 +48,38 @@ async function getMaxLabScore(username, labId) {
   return Math.max(...result);
 }
 
-async function getResult(username = '%', labId = '%', usedeadline = false) {
+async function getResult(args) {
 
   let labs = await Lab.getLabs();
   labs = Object.fromEntries(labs.map(lab => {
-    let { id, ...obj } = lab;
-    return [lab.id, obj];
+    const { id, ...obj } = lab;
+    return [id, obj];
   }));
 
+  let users = await User.getUsers();
+  users = Object.fromEntries(users.map(user => {
+    const { username, ...obj } = user;
+    return [username, obj];
+  }));
+
+
+  if(args.groups) args.groups = JSON.parse(args.groups);
+
+  if(!args.username && args.studentId) {
+    const userdata = await User.getUser({studentId: args.studentId});
+    if(userdata) args.username = userdata.username;
+    else args.username = 'undefined';
+  }
+
   return await new Promise((resolve, reject) => {
-    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ?', [tableName, username, labId], (err, rows) => {
+    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ? AND score like ?', [tableName, (args.username || '%'), (args.labId || '%'), (args.score || '%')], (err, rows) => {
+      allscore = {};
+      if (args.labId) allscore[args.labId] = {};
       rows.forEach((row) => {
         try {
           row.result = JSON.parse(row.result);
           row.createAt = row.createAt.toISOZoneString()
-          if(usedeadline)
+          if(String(args.usedeadline).toLowerCase() == 'true')
           {
             let calced = false;
             for(var i = 0; i < labs[row.labId].deadlines.length; i++) {
@@ -73,11 +91,30 @@ async function getResult(username = '%', labId = '%', usedeadline = false) {
             }
             if(!calced) row.score = 0;
           }
+          let access = args.groups === undefined;
+          if(args.groups) {
+            args.groups.forEach((group) => {
+              if (users[row.username].groups.includes(group.name) || group.name === "all") {
+                access = group.show;
+              }
+            });
+          }
+          if (access) {
+            nowdata = {score: row.score,createAt:row.createAt}
+            if (String(args.showresult).toLowerCase() == 'true') nowdata.result = row.result;
+            if (!(row.labId in allscore)) allscore[row.labId] = {};
+            if (!(String(args.max).toLowerCase() !== 'false')) {
+              if (!(row.username in allscore[row.labId])) allscore[row.labId][row.username] = [];
+              allscore[row.labId][row.username].push(nowdata);
+            } else {
+              if (!(row.username in allscore[row.labId]) || allscore[row.labId][row.username].score < row.score) allscore[row.labId][row.username] = nowdata;
+            }
+          }
         } catch(err) {
           reject(err);
         }
       });
-      resolve(rows);
+      resolve(allscore);
     }); 
   });
 }
