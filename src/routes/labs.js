@@ -127,7 +127,7 @@ router.get('/:labId/chart', auth.checkSignIn, async function(req, res, next) {
     const data = {
       labels: Object.keys(analytics),
       datasets: [{
-        label: '# of Votes',
+        label: 'of users',
         data: Object.values(analytics),
         borderWidth: 1
       }]
@@ -137,6 +137,9 @@ router.get('/:labId/chart', auth.checkSignIn, async function(req, res, next) {
       scales: {
         y: {
           beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
         }
       }
     };
