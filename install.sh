@@ -7,6 +7,7 @@ printhelp()
 	echo "Usage: $0 [options]
 Options:
   -h, --help                            display this help message and exit.
+  -f, --fastmode                        build only.
   -u, --url URL                         backend url.
   -p, --port PORT                       listen port.
   -n, --dbname NAME                     mysql database name.
@@ -24,12 +25,16 @@ port="3000"
 url="http://localhost"
 dbname="nasa"
 dbuser="nasa"
+fastmode=false
 
 while [ "$1" != "" ]
 do
     case "$1" in
         -h|--help)
             printhelp
+            ;;
+        -f|--fastmode)
+            fastmode=true
             ;;
         -u|--url)
             shift
@@ -59,13 +64,17 @@ do
     shift
 done
 
-read -p "Enter database user $dbuser Password: " -s dbpassword
-echo
 
-ansible-galaxy collection install -r $dirpath/requirements.yml -f
-ansible-galaxy role install -r $dirpath/requirements.yml -f
-
-ansible-playbook $dirpath/setup.yml -e "{\"port\":$port,\"url\":$url,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
+if $fastmode
+then
+    ansible-playbook $dirpath/setupfastmode.yml -e "{\"port\":$port,\"url\":$url,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
+else
+    read -p "Enter database user $dbuser Password: " -s dbpassword
+    echo
+    ansible-galaxy collection install -r $dirpath/requirements.yml -f
+    ansible-galaxy role install -r $dirpath/requirements.yml -f
+    ansible-playbook $dirpath/setup.yml -e "{\"port\":$port,\"url\":$url,\"dbname\":\"$dbname\",\"dbuser\":\"$dbuser\",\"dbpassword\":\"$dbpassword\",\"judgeurl\":\"$judgeurl\",\"vncproxyurl\":\"$vncproxyurl\"}"
+fi
 
 echo ""
 echo ""

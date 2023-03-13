@@ -15,11 +15,13 @@
   become: true
 
 - name: Copy judge backend directory
-  copy:
+  synchronize:
     src: "src/"
     dest: "{{ nasajudgebackenddir }}/"
-    owner: nasa
-    group: nasa
+    rsync_opts:
+    - "--chown=nasa:nasa"
+    - "--exclude=node_modules"
+    - "--exclude=dist"
   become: true
 
 - name: Check config files exist
@@ -52,4 +54,5 @@
     src: "templates/systemd/nasajudgebackend.service"
     dest: "{{ etc }}/systemd/system/nasajudgebackend.service"
   become: true
+  changed_when: true
   notify: Start judge

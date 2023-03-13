@@ -1,5 +1,6 @@
 const express = require('express');
 const Lab = require('../models/lab');
+const Score = require('../models/score');
 const User = require('../models/user');
 const judgeapi = require('../utils/judgeapi');
 const createError = require('http-errors');
@@ -7,6 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const auth = require('../middlewares/auth');
 const router = express.Router();
+const Chart = require('chart.js');
+const { createCanvas } = require('canvas');
+
 
 router.get('/', auth.checkSignIn, async function(req, res, next) {
   try {
@@ -97,6 +101,58 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
                        'Content-Type':result.headers['content-type']});
     res.write(Buffer.from(result.data,'binary'),'binary');
     res.end(null, 'binary');
+  } catch(err) {
+    if(err && err.response && err.response.status && err.response.status == 404){
+      res.sendStatus(404);
+    } else {
+      next(err);
+    }
+  }
+});
+
+router.get('/:labId/chart', auth.checkSignIn, async function(req, res, next) {
+  try { 
+    const lab = await Lab.getLab(req.params.labId);
+    if(!lab) throw createError(404);
+    const canvas = createCanvas(600, 400);
+
+    const ctx = canvas.getContext('2d');
+    
+    const allscore = await Score.getResult({labId:req.params.labId})
+    var analytics = {}
+    for(var key in allscore[req.params.labId]) {
+      analytics[allscore[req.params.labId][key]['score']]=analytics[allscore[req.params.labId][key]['score']]?analytics[allscore[req.params.labId][key]['score']]+1:1
+    }
+      
+    const data = {
+      labels: Object.keys(analytics),
+      datasets: [{
+        label: '# of Votes',
+        data: Object.values(analytics),
+        borderWidth: 1
+      }]
+    };
+
+    const options = {
+      scales: {
+        y: {
+          beginAtZero: true,
+        }
+      }
+    };
+
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: data,
+      options: options
+    })
+    res.send(await new Promise((resolve, reject) => {
+      chart.canvas.toDataURL('image/png', (err, png) => {
+        if(err) reject(err);
+        else resolve(png);
+      });
+    }));
+
   } catch(err) {
     if(err && err.response && err.response.status && err.response.status == 404){
       res.sendStatus(404);
