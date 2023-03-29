@@ -77,8 +77,48 @@ router.post('/add', async function(req, res, next) {
     emailpart = email.split("@");
     if(studentId != "" && (emailpart[0] != studentId || emailpart[1] != studentmaildomain)) throw createError(401, "invail email or studentId");
     const password = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
-    if(await Confirm.checkConfirmExist(username, studentId, email)) throw createError(401, "Confirm exist. Please wait 5 min.");
-    res.send(await Confirm.newConfirm(username, password, studentId, email))
+    if(await Confirm.checkAddAccountConfirmExist(username, studentId, email)) throw createError(401, "Confirm exist. Please wait 5 min.");
+    res.send(await Confirm.newAddAccountConfirm(username, password, studentId, email))
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.post('/forgetpasswd', async function(req, res, next) {
+  try {
+    email = req.body.email.replaceAll(/[^0-9a-zA-Z@.]/ig, "").toLowerCase();
+    if(!email) throw createError(401, "invalid input");
+    const userdata = await User.getUser({email});
+    if(!userdata) throw createError(401, "email not exist");
+    if(await Confirm.checkForgetPasswdConfirmExist(email)) throw createError(401, "Confirm exist. Please wait 5 min.");
+    res.send(await Confirm.newForgetPasswdConfirm(email));
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.post('/chpasswd', async function(req, res, next) {
+  try {
+    if(!req.session || !req.session.user || !req.session.user.token) throw createError(401, "bad token");
+    if(!req.body.password) throw createError(404, "invalid input");
+    const confirmdata = await Confirm.popConfirm(req.session.user.token);
+    if(!confirmdata || confirmdata.username) throw createError(401, "bad token");
+    email = confirmdata.email.replaceAll(/[^0-9a-zA-Z@.]/ig, "").toLowerCase();
+    const userdata = await User.getUser({email});
+    const password = crypto.createHmac("sha256", secret).update(req.body.password).digest('base64');
+    res.send(await User.changePasswd(userdata.username, password));
+  } catch(err) {
+    next(err);
+  }
+});
+
+router.get('/checkcanchpasswd', async function(req, res, next) {
+  try {
+    if(!req.session || !req.session.user || !req.session.user.token) throw createError(401, "bad token");
+    const confirmdata = await Confirm.popConfirm(req.session.user.token);
+    if(!confirmdata || confirmdata.username) throw createError(401, "bad token");
+    await Confirm.pushbackConfirm(confirmdata);
+    res.send(true);
   } catch(err) {
     next(err);
   }
@@ -87,9 +127,17 @@ router.post('/add', async function(req, res, next) {
 router.get('/confirm/:token', async function(req, res, next) {
   try {
     const confirmdata = await Confirm.popConfirm(req.params.token);
-    await User.addUser(confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email);
-    await loginsuccess(req, res, confirmdata.username);
-    res.redirect('/#/Lab');
+    if(confirmdata.username) {
+      await User.addUser(confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email);
+      await loginsuccess(req, res, confirmdata.username);
+      res.redirect('/#/Lab');
+    } else {
+      await Confirm.pushbackConfirm(confirmdata);
+      req.session.user = {
+        token: req.params.token,
+      };
+      res.redirect('/#/Passwd');
+    }
   } catch (err) {
     res.sendStatus(404);
   }

@@ -11,7 +11,7 @@ function checkSignIn(req, res, next) {
 }
 
 async function addMeta(req, res, next) {
-  if (req.session && req.session.user) {
+  if (req.session && req.session.user && req.session.user.username) {
     header = {};
     if (req.headers.cookie.includes('session'))
     {

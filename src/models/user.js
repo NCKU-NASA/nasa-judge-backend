@@ -117,9 +117,27 @@ async function addUser(username, password, studentId, email, groups=["guest"]) {
   judgeapi.post("user/build", body);
 }
 
+async function changePasswd(username, password) {
+  const body = await getUser({username});
+  if(body) {
+    await new Promise((resolve, reject) => {
+      con.query('UPDATE ?? SET password=? WHERE username=?'
+        , [tableName, password, username], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+  return true;
+}
+
 module.exports = {
   isExists,
   addUser,
+  changePasswd,
   getUser,
   getUsers,
 };

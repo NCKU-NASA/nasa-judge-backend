@@ -70,7 +70,21 @@ async function popConfirm(token) {
   return output;
 }
 
-async function checkConfirmExist(username, studentId, email) {
+async function pushbackConfirm(confirmdata) {
+  await deleteExpired();
+  await new Promise((resolve, reject) => {
+    con.query('INSERT INTO ?? (token, username, password, studentId, email, createAt) VALUES (?, ?, ?, ?, ?, ?)'
+      , [tableName, confirmdata.token, confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email, confirmdata.createAt], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+async function checkAddAccountConfirmExist(username, studentId, email) {
   await deleteExpired();
   return await new Promise((resolve, reject) => {
     con.query('SELECT * FROM ?? WHERE username=? or studentId=? or email=? LIMIT 1'
@@ -81,7 +95,18 @@ async function checkConfirmExist(username, studentId, email) {
   });
 }
 
-async function newConfirm(username, password, studentId, email) {
+async function checkForgetPasswdConfirmExist(email) {
+  await deleteExpired();
+  return await new Promise((resolve, reject) => {
+    con.query('SELECT * FROM ?? WHERE email=? LIMIT 1'
+      , [tableName, email], (err, result) => {
+      if (err) reject(err);
+      else resolve(result.length === 1);
+    });
+  });
+}
+
+async function newAddAccountConfirm(username, password, studentId, email) {
   await deleteExpired();
   token = crypto.randomUUID();
   await new Promise((resolve, reject) => {
@@ -108,9 +133,38 @@ async function newConfirm(username, password, studentId, email) {
   return true;
 }
 
+async function newForgetPasswdConfirm(email) {
+  await deleteExpired();
+  token = crypto.randomUUID();
+  await new Promise((resolve, reject) => {
+    con.query('INSERT INTO ?? (token, username, password, studentId, email) VALUES (?, ?, ?, ?, ?)'
+      , [tableName, token, "", "", "", email], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+  const template = hbs.compile(fs.readFileSync('files/mailForgetPasswd.html', 'utf8'));
+
+  emailsender.sendMail({
+      to: email,
+      subject: "Restore NASAJudge account",
+      html: template({
+          url: backendurl,
+          token: token,
+      }),
+  })
+  return true;
+}
+
 module.exports = {
   isExists,
-  checkConfirmExist,
-  newConfirm,
+  checkAddAccountConfirmExist,
+  checkForgetPasswdConfirmExist,
+  newAddAccountConfirm,
+  newForgetPasswdConfirm,
   popConfirm,
+  pushbackConfirm,
 };
