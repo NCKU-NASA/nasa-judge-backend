@@ -82,7 +82,7 @@ async function getResult(args) {
           if(String(args.usedeadline).toLowerCase() == 'true')
           {
             let calced = false;
-            for(var i = 0; i < labs[row.labId].deadlines.length; i++) {
+            for(var i = 0; labs[row.labId] && i < labs[row.labId].deadlines.length; i++) {
               if(Date.parse(row.createAt) < Date.parse(labs[row.labId].deadlines[i].time || '9999-12-30 23:59:59')){
                 row.score = row.score * labs[row.labId].deadlines[i].score;
                 calced = true;

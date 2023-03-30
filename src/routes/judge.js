@@ -72,7 +72,7 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
     let calced = false;
     for(var i = 0; i < lab.deadlines.length; i++) {
       if(Date.parse(new Date().toISOZoneString()) < Date.parse(lab.deadlines[i].time || '9999-12-30 23:59:59')) {
-        sorce = score * lab.deadlines[i].score;
+        score = score * lab.deadlines[i].score;
         calced = true;
         break;
       }
