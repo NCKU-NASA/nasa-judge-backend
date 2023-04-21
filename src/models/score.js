@@ -72,48 +72,50 @@ async function getResult(args) {
   }
 
   return await new Promise((resolve, reject) => {
-    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ? AND score like ?', [tableName, (args.username || '%'), (args.labId || '%'), (args.score || '%')], (err, rows) => {
+    con.query('SELECT * FROM ?? WHERE username like ? AND labId like ? AND score like ?', [tableName, (args.username || '%'), (args.labId || '%'), (args.score || '%')], async (err, rows) => {
       allscore = {};
       if (args.labId) allscore[args.labId] = {};
-      rows.forEach((row) => {
+      for(var i = 0; i < rows.length; i++) {
         try {
-          row.result = JSON.parse(row.result);
-          row.createAt = row.createAt.toISOZoneString()
+          rows[i].result = JSON.parse(rows[i].result);
+          rows[i].createAt = rows[i].createAt.toISOZoneString()
           if(String(args.usedeadline).toLowerCase() == 'true')
           {
             let calced = false;
-            for(var i = 0; labs[row.labId] && i < labs[row.labId].deadlines.length; i++) {
-              if(Date.parse(row.createAt) < Date.parse(labs[row.labId].deadlines[i].time || '9999-12-30 23:59:59')){
-                row.score = row.score * labs[row.labId].deadlines[i].score;
+            for(var k = 0; labs[rows[i].labId] && k < labs[rows[i].labId].deadlines.length; k++) {
+              if(Date.parse(rows[i].createAt) < Date.parse(labs[rows[i].labId].deadlines[k].time || '9999-12-30 23:59:59')){
+                rows[i].score = rows[i].score * labs[rows[i].labId].deadlines[k].score;
                 calced = true;
                 break;
               }
             }
-            if(!calced) row.score = 0;
+            if(!calced) rows[i].score = 0;
           }
           let access = args.groups === undefined;
           if(args.groups) {
             args.groups.forEach((group) => {
-              if (users[row.username].groups.includes(group.name) || group.name === "all") {
+              if (users[rows[i].username].groups.includes(group.name) || group.name === "all") {
                 access = group.show;
               }
             });
           }
           if (access) {
-            nowdata = {score: row.score,createAt:row.createAt}
-            if (String(args.showresult).toLowerCase() == 'true') nowdata.result = row.result;
-            if (!(row.labId in allscore)) allscore[row.labId] = {};
+            studentId = (await User.getUser({username: rows[i].username})).studentId;
+            nowdata = {username: rows[i].username, studentId, score: rows[i].score,createAt:rows[i].createAt};
+            userkey = String(args.showkeyisstudentId).toLowerCase() == 'true' ? studentId : rows[i].username;
+            if (String(args.showresult).toLowerCase() == 'true') nowdata.result = rows[i].result;
+            if (!(rows[i].labId in allscore)) allscore[rows[i].labId] = {};
             if (!(String(args.max).toLowerCase() !== 'false')) {
-              if (!(row.username in allscore[row.labId])) allscore[row.labId][row.username] = [];
-              allscore[row.labId][row.username].push(nowdata);
+              if (!(userkey in allscore[rows[i].labId])) allscore[rows[i].labId][userkey] = [];
+              allscore[rows[i].labId][userkey].push(nowdata);
             } else {
-              if (!(row.username in allscore[row.labId]) || allscore[row.labId][row.username].score < row.score) allscore[row.labId][row.username] = nowdata;
+              if (!(userkey in allscore[rows[i].labId]) || allscore[rows[i].labId][userkey].score < rows[i].score) allscore[rows[i].labId][userkey] = nowdata;
             }
           }
         } catch(err) {
           reject(err);
         }
-      });
+      }
       resolve(allscore);
     }); 
   });
