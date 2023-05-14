@@ -3,6 +3,7 @@ const createError = require('http-errors');
 const User = require('../models/user');
 const Confirm = require('../models/confirm');
 const judgeapi = require('../utils/judgeapi');
+const token = require('../utils/token');
 const path = require('path');
 const auth = require('../middlewares/auth');
 const axios = require('axios');
@@ -84,6 +85,18 @@ router.post('/add', async function(req, res, next) {
   }
 });
 
+router.post('/token', auth.checkSignIn, async function(req, res, next) {
+  try { 
+    const username = req.session.user.username;
+    const userdata = await User.getUser({username});
+    if(!userdata) throw createError(404);
+    const nowtoken = token.gettoken(userdata, req.body.data);
+    res.send(nowtoken);
+  } catch(err) {
+    next(err);
+  }
+});
+
 router.post('/forgetpasswd', async function(req, res, next) {
   try {
     email = req.body.email.replaceAll(/[^0-9a-zA-Z@.]/ig, "").toLowerCase();
@@ -143,11 +156,12 @@ router.get('/confirm/:token', async function(req, res, next) {
   }
 });
 
-router.get('/config', auth.checkSignIn, async function(req, res, next) {
+router.get('/config', async function(req, res, next) {
   try { 
-    const username = req.session.user.username;
+    const username = req.query.username;
     const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
+    if(!token.verifytoken(userdata, "userconfig", req.query.token)) throw createError(404);
     const result = await judgeapi.post('user/config', userdata, {
         responseType: 'arraybuffer',
     });

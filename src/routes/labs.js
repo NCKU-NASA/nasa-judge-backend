@@ -2,6 +2,7 @@ const express = require('express');
 const Lab = require('../models/lab');
 const Score = require('../models/score');
 const User = require('../models/user');
+const token = require('../utils/token');
 const judgeapi = require('../utils/judgeapi');
 const createError = require('http-errors');
 const fs = require('fs');
@@ -42,9 +43,9 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
 });
 
 //router.use('/public', auth.checkSignIn, express.static(path.join(__dirname, '../files/public')));
-router.get('/:labId/download/description', auth.checkSignIn, async function(req, res, next) {
+router.get('/:labId/download/description', async function(req, res, next) {
   try { 
-    const username = req.session.user.username;
+    const username = req.query.username;
     const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.params.labId);
@@ -56,6 +57,7 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
       }
     });
     if(!allow) throw createError(404);
+    if(!token.verifytoken(userdata, `${req.params.labId}/description`, req.query.token)) throw createError(404);
     const result = await judgeapi.get(`labs/${req.params.labId}/file/description`, {
         responseType: 'arraybuffer',
     });
@@ -73,9 +75,9 @@ router.get('/:labId/download/description', auth.checkSignIn, async function(req,
   }
 });
 
-router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, res, next) {
+router.get('/:labId/download/:filename', async function(req, res, next) {
   try { 
-    const username = req.session.user.username;
+    const username = req.query.username;
     const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
     const lab = await Lab.getLab(req.params.labId);
@@ -87,8 +89,9 @@ router.get('/:labId/download/:filename', auth.checkSignIn, async function(req, r
       }
     });
     if(!allow) throw createError(404);
+    if(!token.verifytoken(userdata, `${req.params.labId}/${req.params.filename}`, req.query.token)) throw createError(404);
     const contents = lab.contents.filter((content) => content.type === 'download' && content.name === req.params.filename);
-    if(contents.length !== 1) return;
+    if(contents.length !== 1) throw createError(404);
     let path;
     if(contents[0].useusername) path = `labs/${req.params.labId}/file/${username}/${req.params.filename}`
     else path = `labs/${req.params.labId}/file/${req.params.filename}`
