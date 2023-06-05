@@ -41,21 +41,27 @@ router.post('/', auth.checkSignIn, upload.any(), async function(req, res, next) 
       labId: lab.id,
       username,
       ipindex,
-      data: await placeDatas({"input":(input) => {
-        return new Promise((resolve, reject) => {
-          resolve(input || "");
-        });
-      }, "upload":(file) => {
-        if (!file) throw createError(400, 'The number of files did not match');
-        return new Promise((resolve, reject) => {
-          fs.readFile(path.join(os.tmpdir(), file), (err, data) => {
-            if (err) {
-              reject(err);
-            }
-            resolve(Buffer.from(data).toString('base64'));
+      data: await placeDatas({
+        "input":(input) => {
+          return new Promise((resolve, reject) => {
+            resolve(input || "");
           });
-        });
-      }}, lab, {"input":req.body, "upload":uploaddata}),
+        }, 
+        "upload":(file) => {
+          if (!file) throw createError(400, 'The number of files did not match');
+          return new Promise((resolve, reject) => {
+            fs.readFile(path.join(os.tmpdir(), file), (err, data) => {
+              if (err) {
+                reject(err);
+              }
+              resolve(Buffer.from(data).toString('base64'));
+            });
+          });
+        }
+      }, lab, {
+        "input":req.body, 
+        "upload":uploaddata
+      }),
     };
     const result = await judgeapi.post("score/judge", body);
     if(!result.alive) throw createError(404, 'Api server is not alive');
@@ -111,11 +117,20 @@ function calcScore(judgeResult) {
 
 async function placeDatas(solve, lab, data) {
   return Promise.all(lab.contents.map(async (content) => {
-    return {
-      type: content.type,
-      name: content.name,
-      data: await solve[content.type](data[content.type][content.name]),
-    };
+    if(content.type in solve) {
+      return {
+        type: content.type,
+        name: content.name,
+        data: await solve[content.type](data[content.type][content.name]),
+      };
+    }
+    else {
+      return {
+        type: content.type,
+        name: content.name,
+        data: null,
+      };
+    }
   }));
 }
 

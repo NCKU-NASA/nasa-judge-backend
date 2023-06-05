@@ -18,18 +18,22 @@ const studentmaildomain = process.env.STUDENT_EMAIL_DOMAIN;
 router.get('/', auth.checkSignIn, async function(req, res, next) {
   try {
     const userdata = await User.getUser({"username":req.session.user.username});
-    res.send({ username: userdata.username, studentId: userdata.studentId });
+    var password = undefined;
+    if(vncproxyUrl.includes(req.headers['x-forwarded-for'] || req.socket.remoteAddress)) 
+      password = req.session.user.password;
+    res.send({ username: userdata.username, studentId: userdata.studentId, password, ipindex: userdata.ipindex, isadmin: userdata.groups.includes('admin') });
   } catch(err) {
     next(err);
   }
 })
 
-async function loginsuccess(req, res, username) {
+async function loginsuccess(req, res, username, password) {
     req.session.user = {
       username,
+      password,
     };
     
-    const body = {
+/*    const body = {
       username,
     };
     try
@@ -37,7 +41,7 @@ async function loginsuccess(req, res, username) {
         const result = await axios.post(vncproxyUrl + "/session", body);
         res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""))
     }
-    catch(err){}
+    catch(err){}*/
 }
 
 router.post('/login', async function(req, res, next) {
@@ -54,7 +58,7 @@ router.post('/login', async function(req, res, next) {
         throw createError(401, 'username or password incorrect');
       }
     }
-    await loginsuccess(req, res, user.username);
+    await loginsuccess(req, res, user.username, req.body.password);
     res.send('Login success');
   } catch(err) {
     next(err);
@@ -142,8 +146,9 @@ router.get('/confirm/:token', async function(req, res, next) {
     const confirmdata = await Confirm.popConfirm(req.params.token);
     if(confirmdata.username) {
       await User.addUser(confirmdata.username, confirmdata.password, confirmdata.studentId, confirmdata.email);
-      await loginsuccess(req, res, confirmdata.username);
-      res.redirect('/#/Lab');
+      //await loginsuccess(req, res, confirmdata.username);
+      //res.redirect('/#/Lab');
+      res.redirect('/');
     } else {
       await Confirm.pushbackConfirm(confirmdata);
       req.session.user = {
@@ -196,7 +201,7 @@ router.post('/userdata', auth.checkSignIn, async function(req, res, next) {
     const username = req.session.user.username;
     const userdata = await User.getUser({username});
     if(!userdata) throw createError(404);
-    if(!userdata.groups.includes("admin")) throw createError(404);
+    if(!userdata.groups.includes("admin") && username !== req.body.username) throw createError(404);
     res.send(await User.getUser(req.body));
   } catch (err) {
     next(err);

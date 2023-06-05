@@ -1,6 +1,6 @@
 const createError = require('http-errors');
 const axios = require('axios');
-const vncproxyUrl = process.env.VNCPROXY_URL;
+//const vncproxyUrl = process.env.VNCPROXY_URL;
 
 function checkSignIn(req, res, next) {
   if (req.isSignIn === true) {
@@ -12,7 +12,7 @@ function checkSignIn(req, res, next) {
 
 async function addMeta(req, res, next) {
   if (req.session && req.session.user && req.session.user.username) {
-    header = {};
+    /*header = {};
     if (req.headers.cookie.includes('session'))
     {
       nowsession = req.headers.cookie.split('session=')[1];
@@ -37,7 +37,7 @@ async function addMeta(req, res, next) {
           res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""));
         }
     }
-    catch(err){}
+    catch(err){}*/
     req.isSignIn = true;
   } else {
     res.clearCookie('session')
