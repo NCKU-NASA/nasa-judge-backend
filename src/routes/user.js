@@ -27,21 +27,15 @@ router.get('/', auth.checkSignIn, async function(req, res, next) {
   }
 })
 
+router.get('/issignin', async function(req, res, next) {
+    res.send(req.isSignIn === true);
+})
+
 async function loginsuccess(req, res, username, password) {
     req.session.user = {
       username,
       password,
     };
-    
-/*    const body = {
-      username,
-    };
-    try
-    {
-        const result = await axios.post(vncproxyUrl + "/session", body);
-        res.cookie('session', result.headers['set-cookie'][0].split(';')[0].replace("session=",""))
-    }
-    catch(err){}*/
 }
 
 router.post('/login', async function(req, res, next) {
