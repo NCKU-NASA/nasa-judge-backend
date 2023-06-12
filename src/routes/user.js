@@ -83,6 +83,48 @@ router.post('/add', async function(req, res, next) {
   }
 });
 
+router.get('/appendtogroup', auth.checkSignIn, async function(req, res, next) {
+    try {
+        const adminusername = req.session.user.username;
+        const adminuserdata = await User.getUser({username: adminusername});
+        if(!adminuserdata) throw createError(404);
+        if(!adminuserdata.groups.includes("admin")) throw createError(404);
+
+        var username;
+        if(req.query.username) username = req.query.username.toLowerCase();
+        else {
+            var userdata = await User.getUser({studentId: req.query.studentId.toLowerCase()});
+            username = userdata.username;
+        }
+        await User.appendtogroup(username, req.query.group)
+        var userdata = await User.getUser({username});
+        res.send(userdata.groups);
+    } catch(err) {
+        next(err);
+    }
+});
+
+router.get('/removefromgroup', auth.checkSignIn, async function(req, res, next) {
+    try {
+        const adminusername = req.session.user.username;
+        const adminuserdata = await User.getUser({username: adminusername});
+        if(!adminuserdata) throw createError(404);
+        if(!adminuserdata.groups.includes("admin")) throw createError(404);
+
+        var username;
+        if(req.query.username) username = req.query.username.toLowerCase();
+        else {
+            var userdata = await User.getUser({studentId: req.query.studentId.toLowerCase()});
+            username = userdata.username;
+        }
+        await User.removefromgroup(username, req.query.group)
+        var userdata = await User.getUser({username});
+        res.send(userdata.groups);
+    } catch(err) {
+        next(err);
+    }
+});
+
 router.post('/token', auth.checkSignIn, async function(req, res, next) {
   try { 
     const username = req.session.user.username;
@@ -148,7 +190,7 @@ router.get('/confirm/:token', async function(req, res, next) {
       req.session.user = {
         token: req.params.token,
       };
-      res.redirect('/#/Passwd');
+      res.redirect('/Passwd');
     }
   } catch (err) {
     res.sendStatus(404);

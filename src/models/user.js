@@ -117,6 +117,44 @@ async function addUser(username, password, studentId, email, groups=["guest"]) {
   judgeapi.post("user/build", body);
 }
 
+async function removefromgroup(username, group) {
+  const body = await getUser({username});
+  if(body) {
+    body.groups = body.groups.filter(item => item !== group)
+    groups = JSON.stringify(body.groups);
+    await new Promise((resolve, reject) => {
+      con.query('UPDATE ?? SET groups=? WHERE username=?'
+        , [tableName, groups, username], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+  return true;
+}
+
+async function appendtogroup(username, group) {
+  const body = await getUser({username});
+  if(body) {
+    if(group) if(!body.groups.includes(group)) body.groups.push(group);
+    groups = JSON.stringify(body.groups);
+    await new Promise((resolve, reject) => {
+      con.query('UPDATE ?? SET groups=? WHERE username=?'
+        , [tableName, groups, username], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+  return true;
+}
+
 async function changePasswd(username, password) {
   const body = await getUser({username});
   if(body) {
@@ -138,6 +176,8 @@ module.exports = {
   isExists,
   addUser,
   changePasswd,
+  removefromgroup,
+  appendtogroup,
   getUser,
   getUsers,
 };
