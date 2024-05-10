@@ -1,7 +1,0 @@
-collections:
-  - name: ansible.utils
-  - name: community.mysql
-
-roles:
-  - name: jimmy01240397.nodejs
-  - name: geerlingguy.mysql

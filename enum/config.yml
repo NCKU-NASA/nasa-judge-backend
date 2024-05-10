@@ -1,0 +1,34 @@
+- name: confirm_type
+  imports:
+  - '"golang.org/x/exp/slices"'
+  - '"text/template"'
+  basetype: byte
+  init: |-
+    const (
+        NewAccount ConfirmType = iota
+        ForgetPassword
+        Unknown ConfirmType = 255
+    )
+    var set []string
+    var subjectset []string
+    var templateset []*template.Template
+    func init() {
+        set = []string{"NewAccount", "ForgetPassword"}
+        subjectset = []string{"Activate NASAJudge account", "Restore NASAJudge account"}
+        templateset = []*template.Template{
+            template.Must(template.New("newaccount.tmpl").ParseFiles("templates/confirmmail/newaccount.tmpl")),
+            template.Must(template.New("forgetpassword.tmpl").ParseFiles("templates/confirmmail/forgetpassword.tmpl")),
+        }
+    }
+    func (c ConfirmType) GetSubject() string {
+        return subjectset[c]
+    }
+    func (c ConfirmType) GetTemplate() *template.Template {
+        return templateset[c]
+    }
+  random: rand.Intn(Len())
+  length: len(set)
+  unknown: Unknown
+  toString: set[c]
+  fromString: byte(slices.Index(set, s))
+  postgresType: smallint
