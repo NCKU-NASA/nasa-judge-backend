@@ -12,7 +12,7 @@ RUN --mount=type=cache,target="$CACHE" make clean && make
 
 FROM debian:latest as release
 
-RUN apt-get update && apt-get full-upgrade -y && apt-get install ca-certificates -y && update-ca-certificates
+RUN apt-get update && apt-get full-upgrade -y && apt-get install ca-certificates curl wget -y && update-ca-certificates
 
 COPY --from=builder /src/bin /app
 COPY templates /app/templates

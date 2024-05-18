@@ -6,12 +6,13 @@ import (
     "bytes"
     "encoding/json"
     "github.com/google/uuid"
+    
+    confirmtype "github.com/NCKU-NASA/nasa-judge-lib/enum/confirm_type"
 
     "github.com/NCKU-NASA/nasa-judge-backend/utils/config"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/errutil"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/redis"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/smtp"
-    confirmtype "github.com/NCKU-NASA/nasa-judge-backend/enum/confirm_type"
 )
 
 const (

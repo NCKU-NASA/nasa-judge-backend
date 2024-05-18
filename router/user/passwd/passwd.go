@@ -5,9 +5,10 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/gin-contrib/sessions"
 
-    confirmtype "github.com/NCKU-NASA/nasa-judge-backend/enum/confirm_type"
+    confirmtype "github.com/NCKU-NASA/nasa-judge-lib/enum/confirm_type"
+    "github.com/NCKU-NASA/nasa-judge-lib/schema/user"
+
     "github.com/NCKU-NASA/nasa-judge-backend/utils/errutil"
-    "github.com/NCKU-NASA/nasa-judge-backend/models/user"
     "github.com/NCKU-NASA/nasa-judge-backend/models/confirm"
 )
 

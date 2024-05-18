@@ -5,11 +5,12 @@ import (
     "github.com/gin-contrib/sessions"
     "github.com/gin-contrib/sessions/gorm"
     "github.com/go-errors/errors"
+    
+    "github.com/NCKU-NASA/nasa-judge-lib/utils/database"
 
     "github.com/NCKU-NASA/nasa-judge-backend/router"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/redis"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/config"
-    "github.com/NCKU-NASA/nasa-judge-backend/utils/database"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/errutil"
     "github.com/NCKU-NASA/nasa-judge-backend/middlewares/auth"
 )

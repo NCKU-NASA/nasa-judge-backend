@@ -1,22 +1,44 @@
 package user
 import (
+    "io"
+    "bytes"
     "strings"
+    "io/ioutil"
     "encoding/json"
+    "encoding/base64"
+    "net/http"
+    "net/url"
+    "archive/zip"
 
+    "golang.org/x/exp/maps"
     "github.com/gin-gonic/gin"
     "github.com/gin-contrib/sessions"
 
-    confirmtype "github.com/NCKU-NASA/nasa-judge-backend/enum/confirm_type"
+    confirmtype "github.com/NCKU-NASA/nasa-judge-lib/enum/confirm_type"
+    "github.com/NCKU-NASA/nasa-judge-lib/schema/user"
+    "github.com/NCKU-NASA/nasa-judge-lib/utils/password"
+
     "github.com/NCKU-NASA/nasa-judge-backend/utils/errutil"
     "github.com/NCKU-NASA/nasa-judge-backend/utils/config"
     "github.com/NCKU-NASA/nasa-judge-backend/middlewares/auth"
-    "github.com/NCKU-NASA/nasa-judge-backend/models/user"
     "github.com/NCKU-NASA/nasa-judge-backend/models/confirm"
     "github.com/NCKU-NASA/nasa-judge-backend/router/user/passwd"
     "github.com/NCKU-NASA/nasa-judge-backend/router/user/admin"
 )
 
 var router *gin.RouterGroup
+
+func init() {
+    if _, err := user.GetUser("id = ?", 1); err != nil {
+        admin := user.User{
+            Username: config.AdminUser,
+            Password: password.New(config.AdminPasswd),
+            Email: config.SMTPuser,
+            Groups: []*user.Group{&user.Group{Groupname: "admin"}},
+        }
+        admin.Create()
+    }
+}
 
 func Init(r *gin.RouterGroup) {
     router = r
@@ -26,7 +48,7 @@ func Init(r *gin.RouterGroup) {
     router.POST("/add", add)
     router.POST("/token", auth.CheckSignIn, token)
     router.GET("/confirm/:token", onconfirm)
-    //router.GET("/config", config)
+    router.GET("/config", userconfig)
 
     passwd.Init(router.Group("/passwd"))
     admin.Init(router.Group("/admin"))
@@ -182,6 +204,22 @@ func onconfirm(c *gin.Context) {
             errutil.AbortAndStatus(c, 500)
             return
         }
+        postdata, err := json.Marshal(struct {
+            Username string `json:"username"`
+        } {
+            Username: userdata.Username,
+        })
+        if err != nil {
+            errutil.AbortAndStatus(c, 500)
+            return
+        }
+        for _, api := range config.UserModuleAPIs {
+            nowurl, err := url.JoinPath(api, "update")
+            if err != nil {
+                continue
+            }
+            http.Post(nowurl, "application/json", bytes.NewReader(postdata))
+        }
         c.Redirect(301, "/")
         return
     case confirmtype.ForgetPassword:
@@ -198,4 +236,72 @@ func onconfirm(c *gin.Context) {
         errutil.AbortAndStatus(c, 404)
         return
     }
+}
+
+func userconfig(c *gin.Context) {
+    userdata := user.User{
+        Username: c.Query("username"),
+    }
+    token := c.Query("token")
+    userdata.Fix()
+    if userdata.Username == "" {
+        errutil.AbortAndStatus(c, 404)
+        return
+    }
+    userdata, err := user.GetUser(userdata)
+    if err != nil {
+        errutil.AbortAndStatus(c, 404)
+        return
+    }
+    if !userdata.VerifyToken(token, "userconfig") {
+        errutil.AbortAndStatus(c, 404)
+        return
+    }
+    client := &http.Client{}
+    result := make(map[string]string)
+    for _, api := range config.UserModuleAPIs {
+        nowurl, err := url.JoinPath(api, "get")
+        if err != nil {
+            continue
+        }
+        req, err := http.NewRequest("GET", nowurl, nil)
+        if err != nil {
+            continue
+        }
+        q := req.URL.Query()
+        q.Add("username", userdata.Username)
+        req.URL.RawQuery = q.Encode()
+        func() {
+            res, err := client.Do(req)
+            if err != nil {
+                return
+            }
+            defer res.Body.Close()
+            resultbyte, err := ioutil.ReadAll(res.Body)
+            if err != nil {
+                return
+            }
+            var nowresult map[string]string
+            err = json.Unmarshal(resultbyte, &nowresult)
+            if err != nil {
+                return
+            }
+            maps.Copy(result, nowresult)
+        }()
+    }
+    var buf bytes.Buffer
+    zipWriter := zip.NewWriter(io.Writer(&buf))
+    for filename, data := range result {
+        filewrite, err := zipWriter.Create(filename)
+        if err != nil {
+            continue
+        }
+        databyte, err := base64.StdEncoding.DecodeString(data)
+        if err != nil {
+            continue
+        }
+        filewrite.Write(databyte)
+    }
+    zipWriter.Close()
+    c.Data(200, "application/octet-stream", buf.Bytes())
 }

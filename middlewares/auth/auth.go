@@ -4,9 +4,10 @@ import (
 //    "fmt"
     "github.com/gin-gonic/gin"
     "github.com/gin-contrib/sessions"
+    
+    "github.com/NCKU-NASA/nasa-judge-lib/schema/user"
 
     "github.com/NCKU-NASA/nasa-judge-backend/utils/errutil"
-    "github.com/NCKU-NASA/nasa-judge-backend/models/user"
 )
 
 func CheckSignIn(c *gin.Context) {

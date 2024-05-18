@@ -3,6 +3,7 @@ package config
 import (
     "os"
     "strconv"
+    "strings"
 )
 
 var Debug bool
@@ -12,13 +13,6 @@ var Secret string
 var Sessionname string
 var AdminUser string
 var AdminPasswd string
-var DBservice string
-var DBuser string
-var DBpasswd string
-var DBhost string
-var DBport string
-var DBname string
-var DBdebug bool
 var RedisURL string
 var RedisPasswd string
 var SMTPhost string
@@ -27,6 +21,10 @@ var SMTPuser string
 var SMTPusername string
 var SMTPpasswd string
 var StudentEmailDomain string
+var JudgeScheme string
+var JudgeHost string
+var JudgePort string
+var UserModuleAPIs []string
 
 func init() {
     loadenv()
@@ -40,27 +38,12 @@ func init() {
             Debug = false
         }
     }
-    dbdebugstr, exists := os.LookupEnv("DBDEBUG")
-    if !exists {
-        DBdebug = true
-    } else {
-        DBdebug, err = strconv.ParseBool(dbdebugstr)
-        if err != nil {
-            DBdebug = false
-        }
-    }
     URL = os.Getenv("URL")
     Port = os.Getenv("PORT")
     Secret = os.Getenv("SECRET")
     Sessionname = os.Getenv("SESSIONNAME")
     AdminUser = os.Getenv("ADMINUSER")
     AdminPasswd = os.Getenv("ADMINPASSWD")
-    DBservice = os.Getenv("DBSERVICE")
-    DBuser = os.Getenv("DBUSER")
-    DBpasswd = os.Getenv("DBPASSWD")
-    DBhost = os.Getenv("DBHOST")
-    DBport = os.Getenv("DBPORT")
-    DBname = os.Getenv("DBNAME")
     RedisURL = os.Getenv("REDISURL")
     RedisPasswd = os.Getenv("REDISPASSWD")
     SMTPhost = os.Getenv("SMTP_HOST")
@@ -69,4 +52,11 @@ func init() {
     SMTPusername = os.Getenv("SMTP_USERNAME")
     SMTPpasswd = os.Getenv("SMTP_PASSWD")
     StudentEmailDomain = os.Getenv("STUDENT_EMAIL_DOMAIN")
+    JudgeScheme = os.Getenv("JUDGE_SCHEME")
+    JudgeHost = os.Getenv("JUDGE_HOST")
+    JudgePort = os.Getenv("JUDGE_PORT")
+    UserModuleAPIs = strings.Split(os.Getenv("USERMODULEAPIS"), "\n")
+    for idx, api := range UserModuleAPIs {
+        UserModuleAPIs[idx] = strings.Trim(api, " \t\n")
+    }
 }
