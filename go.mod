@@ -3,7 +3,7 @@ module github.com/NCKU-NASA/nasa-judge-backend
 go 1.20
 
 require (
-	github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530215705-53c00ca6d018
+	github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530221544-c93f04dee42e
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-echarts/go-echarts/v2 v2.3.3
