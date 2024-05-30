@@ -3,11 +3,8 @@ import (
     "io"
     "bytes"
     "strings"
-    "io/ioutil"
     "encoding/json"
     "encoding/base64"
-    "net/http"
-    "net/url"
     "archive/zip"
 
     "golang.org/x/exp/maps"
@@ -204,22 +201,12 @@ func onconfirm(c *gin.Context) {
             errutil.AbortAndStatus(c, 500)
             return
         }
-        postdata, err := json.Marshal(struct {
-            Username string `json:"username"`
-        } {
-            Username: userdata.Username,
-        })
-        if err != nil {
-            errutil.AbortAndStatus(c, 500)
-            return
-        }
         for _, api := range config.UserModuleAPIs {
-            nowurl, err := url.JoinPath(api, "update")
-            if err != nil {
-                continue
-            }
-            http.Post(nowurl, "application/json", bytes.NewReader(postdata))
+            api.Update(userdata)
         }
+        session := sessions.Default(c)
+        session.Set("user", userdata.Username)
+        session.Save()
         c.Redirect(301, "/")
         return
     case confirmtype.ForgetPassword:
@@ -257,37 +244,13 @@ func userconfig(c *gin.Context) {
         errutil.AbortAndStatus(c, 404)
         return
     }
-    client := &http.Client{}
     result := make(map[string]string)
     for _, api := range config.UserModuleAPIs {
-        nowurl, err := url.JoinPath(api, "get")
+        nowresult, err := api.Get(userdata)
         if err != nil {
             continue
         }
-        req, err := http.NewRequest("GET", nowurl, nil)
-        if err != nil {
-            continue
-        }
-        q := req.URL.Query()
-        q.Add("username", userdata.Username)
-        req.URL.RawQuery = q.Encode()
-        func() {
-            res, err := client.Do(req)
-            if err != nil {
-                return
-            }
-            defer res.Body.Close()
-            resultbyte, err := ioutil.ReadAll(res.Body)
-            if err != nil {
-                return
-            }
-            var nowresult map[string]string
-            err = json.Unmarshal(resultbyte, &nowresult)
-            if err != nil {
-                return
-            }
-            maps.Copy(result, nowresult)
-        }()
+        maps.Copy(result, nowresult)
     }
     var buf bytes.Buffer
     zipWriter := zip.NewWriter(io.Writer(&buf))

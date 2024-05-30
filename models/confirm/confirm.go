@@ -36,7 +36,7 @@ func Push(ctype confirmtype.ConfirmType, email string, data any) error {
     keys, _ := redis.Scan(genrediskey(ctype, email, "*"))
     if len(keys) > 0 {
         err := &errutil.Err{
-            Code: 409,
+            Code: 429,
             Msg: "Confirm exist. Please wait 5 min.",
         }
         return err

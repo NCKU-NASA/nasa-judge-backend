@@ -4,6 +4,8 @@ import (
     "os"
     "strconv"
     "strings"
+
+    "github.com/NCKU-NASA/nasa-judge-backend/apis/module"
 )
 
 var Debug bool
@@ -24,7 +26,7 @@ var StudentEmailDomain string
 var JudgeScheme string
 var JudgeHost string
 var JudgePort string
-var UserModuleAPIs []string
+var UserModuleAPIs []module.ModuleAPI
 
 func init() {
     loadenv()
@@ -55,8 +57,9 @@ func init() {
     JudgeScheme = os.Getenv("JUDGE_SCHEME")
     JudgeHost = os.Getenv("JUDGE_HOST")
     JudgePort = os.Getenv("JUDGE_PORT")
-    UserModuleAPIs = strings.Split(os.Getenv("USERMODULEAPIS"), "\n")
-    for idx, api := range UserModuleAPIs {
-        UserModuleAPIs[idx] = strings.Trim(api, " \t\n")
+    userapitmp := strings.Split(os.Getenv("USERMODULEAPIS"), "\n")
+    UserModuleAPIs = make([]module.ModuleAPI, len(userapitmp))
+    for idx, api := range userapitmp {
+        UserModuleAPIs[idx] = module.ModuleAPI(strings.Trim(api, " \t\n"))
     }
 }
