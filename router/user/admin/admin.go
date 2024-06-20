@@ -45,7 +45,7 @@ func alluserdata(c *gin.Context) {
 
 func setgroup(c *gin.Context) {
     method := c.Param("method")
-    if method != "add" || method != "remove" {
+    if method != "add" && method != "remove" {
         errutil.AbortAndStatus(c, 404)
         return
     }

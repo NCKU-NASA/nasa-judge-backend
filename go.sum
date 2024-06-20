@@ -38,6 +38,10 @@ github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530221544-c93f04dee42e h1:OGd6ib
 github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530221544-c93f04dee42e/go.mod h1:/Bw5tZxR7Cmw21zktGPIKolDGs1mLqqES0mQNRHT0ug=
 github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530222327-2b700e03164e h1:SJLgvcvxqiZTmZx46z5ksghtyMSwiCaa5yJe9JLtmbQ=
 github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240530222327-2b700e03164e/go.mod h1:/Bw5tZxR7Cmw21zktGPIKolDGs1mLqqES0mQNRHT0ug=
+github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240531015228-4cb795beb670 h1:d+HMEZx6DgURhAUF3jqKGMixwK+XJWhfO5It5gwTA6c=
+github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240531015228-4cb795beb670/go.mod h1:/Bw5tZxR7Cmw21zktGPIKolDGs1mLqqES0mQNRHT0ug=
+github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240620200232-e2fb21b4bd4e h1:eniRVRQJBBzPpqvMw/q9KWceNaa4uDFgG0XMW6hH+ZA=
+github.com/NCKU-NASA/nasa-judge-lib v0.0.0-20240620200232-e2fb21b4bd4e/go.mod h1:/Bw5tZxR7Cmw21zktGPIKolDGs1mLqqES0mQNRHT0ug=
 github.com/blend/go-sdk v1.20220411.3 h1:GFV4/FQX5UzXLPwWV03gP811pj7B8J2sbuq+GJQofXc=
 github.com/blend/go-sdk v1.20220411.3/go.mod h1:7lnH8fTi6U4i1fArEXRyOIY2E1X4MALg09qsQqY1+ak=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
